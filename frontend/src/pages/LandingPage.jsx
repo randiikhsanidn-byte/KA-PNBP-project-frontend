@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Brand from '../components/Brand'
 import { Field, inputClass, selectClass, textareaClass } from '../components/Field'
 import heroImage from '../assets/Background.png'
+import nitaAvatar from '../assets/nita-avatar.jpg'
 import { agencies, faqs } from '../data/mock'
 import { api } from '../api/client'
 
@@ -44,11 +45,11 @@ export default function LandingPage() {
   const questionConsentId = useId()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // AI Assistant Chat State (Asisten AI Tarif PNBP)
+  // Knowledge & Question Chat State (Tanya Nita, Temukan tarif PNBP)
   const [chatMessages, setChatMessages] = useState([
     {
-      sender: 'ai',
-      text: 'Halo! Saya ditenagai arsitektur RAG. Ada yang bisa saya bantu terkait tarif PNBP pada instansi tertentu?',
+      sender: 'system',
+      text: 'Halo! Saya Nita, Navigator Informasi Tarif berbasis AI. Ada yang bisa saya bantu terkait tarif PNBP pada instansi tertentu?',
       citation: null,
     },
   ])
@@ -188,17 +189,96 @@ export default function LandingPage() {
   }
 
   // Feedback Form State (Masukan atas Tarif PNBP)
+  const [feedbackName, setFeedbackName] = useState('')
+  const [feedbackNik, setFeedbackNik] = useState('')
+  const [feedbackKtpFile, setFeedbackKtpFile] = useState(null)
+  const [feedbackEmail, setFeedbackEmail] = useState('')
+  const [feedbackPhone, setFeedbackPhone] = useState('')
   const [feedbackAgencyId, setFeedbackAgencyId] = useState('')
   const [feedbackCategory, setFeedbackCategory] = useState('')
   const [feedbackDetail, setFeedbackDetail] = useState('')
+  const [feedbackSupportingFile, setFeedbackSupportingFile] = useState(null)
+  const [feedbackConsent, setFeedbackConsent] = useState(true)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackResult, setFeedbackResult] = useState(null)
   const [feedbackError, setFeedbackError] = useState('')
+
+  const ktpInputRef = useRef(null)
+  const supportingInputRef = useRef(null)
+
+  const handleKtpChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      setFeedbackError('File KTP harus berformat gambar (JPG, PNG) atau PDF.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedbackError('Ukuran file KTP maksimal 5MB.')
+      return
+    }
+    setFeedbackError('')
+    setFeedbackKtpFile(file)
+  }
+
+  const handleSupportingChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) {
+      setFeedbackError('Ukuran file data pendukung maksimal 10MB.')
+      return
+    }
+    setFeedbackError('')
+    setFeedbackSupportingFile(file)
+  }
+
+  const resetFeedbackForm = () => {
+    setFeedbackName('')
+    setFeedbackNik('')
+    setFeedbackKtpFile(null)
+    setFeedbackEmail('')
+    setFeedbackPhone('')
+    setFeedbackAgencyId('')
+    setFeedbackCategory('')
+    setFeedbackDetail('')
+    setFeedbackSupportingFile(null)
+    setFeedbackConsent(true)
+    setFeedbackResult(null)
+    setFeedbackError('')
+    if (ktpInputRef.current) ktpInputRef.current.value = ''
+    if (supportingInputRef.current) supportingInputRef.current.value = ''
+  }
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault()
     setFeedbackError('')
 
+    if (!feedbackName.trim()) {
+      setFeedbackError('Nama lengkap wajib diisi.')
+      return
+    }
+    const cleanNik = feedbackNik.trim()
+    if (!cleanNik) {
+      setFeedbackError('NIK wajib diisi.')
+      return
+    }
+    if (!/^\d{16}$/.test(cleanNik)) {
+      setFeedbackError('NIK harus terdiri dari 16 digit angka.')
+      return
+    }
+    if (!feedbackKtpFile) {
+      setFeedbackError('Upload KTP (*wajib) belum dipilih.')
+      return
+    }
+    if (!feedbackEmail.trim()) {
+      setFeedbackError('Email wajib diisi.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(feedbackEmail.trim())) {
+      setFeedbackError('Format email tidak valid.')
+      return
+    }
     if (!feedbackAgencyId) {
       setFeedbackError('Silakan pilih Kementerian / Lembaga terlebih dahulu.')
       return
@@ -211,19 +291,33 @@ export default function LandingPage() {
       setFeedbackError('Detail masukan wajib diisi.')
       return
     }
+    if (!feedbackConsent) {
+      setFeedbackError('Persetujuan privasi wajib dicentang sebelum mengirim.')
+      return
+    }
 
     setFeedbackSubmitting(true)
 
     try {
       const selectedAgencyObj = agencies.find((a) => a.id === feedbackAgencyId)
       const res = await api.submitFeedback({
+        name: feedbackName.trim(),
+        nik: cleanNik,
+        ktp_file: { name: feedbackKtpFile.name, size: feedbackKtpFile.size },
+        email: feedbackEmail.trim(),
+        phone: feedbackPhone.trim() || null,
         agency_id: feedbackAgencyId,
+        agency_name: selectedAgencyObj?.name,
         service_id: selectedAgencyObj?.services[0]?.id || 'svc_general',
+        service_name: selectedAgencyObj?.services[0]?.name || 'Layanan Terkait',
         tariff_id: selectedAgencyObj?.services[0]?.tariffs[0]?.id || 'trf_general',
+        tariff_name: selectedAgencyObj?.services[0]?.tariffs[0]?.name || 'Tarif Terkait',
         category: feedbackCategory,
-        message: feedbackDetail,
-        name: 'Masyarakat',
-        consent: true,
+        message: feedbackDetail.trim(),
+        supporting_file: feedbackSupportingFile
+          ? { name: feedbackSupportingFile.name, size: feedbackSupportingFile.size }
+          : null,
+        consent: feedbackConsent,
       })
 
       const now = new Date()
@@ -237,15 +331,23 @@ export default function LandingPage() {
         now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
         ' WIB'
 
+      const ticketNumber = res.data.ticket_number || `TKT-${res.data.reference}`
+
       setFeedbackResult({
+        ticketNumber: ticketNumber,
         reference: res.data.reference,
         statusLabel: res.data.status_label || 'Baru (Menunggu Triage)',
         submittedAt: formattedTime,
         agencyName: selectedAgencyObj?.name || 'Instansi Terkait',
         category: feedbackCategory,
-        message: feedbackDetail,
+        message: feedbackDetail.trim(),
+        name: feedbackName.trim(),
+        nik: cleanNik,
+        email: feedbackEmail.trim(),
+        phone: feedbackPhone.trim(),
+        ktpName: feedbackKtpFile.name,
+        supportingName: feedbackSupportingFile?.name || null,
       })
-      setFeedbackDetail('')
     } catch (err) {
       setFeedbackError(err.message || 'Gagal mengirim masukan. Silakan coba lagi.')
     } finally {
@@ -432,12 +534,17 @@ export default function LandingPage() {
               >
                 <div>
                   <div className="flex items-center gap-3.5 mb-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl border border-blue-100/80 shadow-xs">
-                      🤖
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+                      <img src={nitaAvatar} alt="Nita Avatar" className="h-full w-full object-cover" />
                     </div>
-                    <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
-                      Asisten AI Tarif PNBP
-                    </h2>
+                    <div>
+                      <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
+                        Tanya Nita, Temukan tarif PNBP
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Navigator Informasi Tarif berbasis AI
+                      </p>
+                    </div>
                   </div>
 
                   {/* Chat Box Container */}
@@ -445,11 +552,9 @@ export default function LandingPage() {
                     {/* Chat Messages List */}
                     <div className="overflow-y-auto space-y-4 pr-1 mb-3 flex-1 max-h-[320px]">
                       {chatMessages.map((msg, idx) =>
-                        msg.sender === 'ai' ? (
+                        msg.sender !== 'user' ? (
                           <div key={idx} className="flex items-start gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy-950 text-[11px] font-black text-white shadow-xs">
-                              AI
-                            </div>
+                            <img src={nitaAvatar} alt="Nita" className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-xs" />
                             <div className="max-w-[85%] rounded-2xl rounded-tl-none border border-slate-200/80 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-xs">
                               <p className="whitespace-pre-line">{msg.text}</p>
                               {msg.citation && (
@@ -470,16 +575,14 @@ export default function LandingPage() {
                       )}
                       {aiTyping && (
                         <div className="flex items-start gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy-950 text-[11px] font-black text-white shadow-xs">
-                            AI
-                          </div>
+                          <img src={nitaAvatar} alt="Nita" className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-xs" />
                           <div className="rounded-2xl rounded-tl-none border border-slate-200/80 bg-white p-3.5 text-xs text-slate-500 flex items-center gap-2 shadow-xs">
                             <span className="flex gap-1">
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </span>
-                            <span>Menelusuri basis regulasi & data tarif PNBP...</span>
+                            <span>Nita sedang menelusuri regulasi & data tarif PNBP...</span>
                           </div>
                         </div>
                       )}
@@ -508,7 +611,7 @@ export default function LandingPage() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Ketik pertanyaan regulasi..."
+                      placeholder="Ketik pertanyaan anda disini..."
                       className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
                       disabled={aiTyping}
                     />
@@ -532,13 +635,18 @@ export default function LandingPage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-eco-50 text-2xl border border-eco-100/80 shadow-xs">
                     ✏️
                   </div>
-                  <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
-                    Masukan atas Tarif PNBP
-                  </h2>
+                  <div>
+                    <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
+                      Masukan atas Tarif PNBP
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Sampaikan masukan, aspirasi, atau usulan penyesuaian tarif PNBP secara resmi dan terverifikasi.
+                    </p>
+                  </div>
                 </div>
 
                 {feedbackResult ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="flex flex-col items-center justify-center py-4 text-center">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-eco-100 text-eco-700">
                       <CheckCircleIcon />
                     </div>
@@ -548,24 +656,82 @@ export default function LandingPage() {
                     <h3 className="mt-2 text-xl font-extrabold text-navy-950">
                       Masukan Berhasil Diterima
                     </h3>
-                    <p className="mt-1 text-xs text-slate-600">Nomor referensi pelacakan:</p>
-                    <p className="mt-1 font-mono text-xl font-extrabold text-navy-950 tracking-wider">
-                      {feedbackResult.reference}
+                    <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Nomor Tiket Anda:
                     </p>
-                    <p className="mt-2 text-xs text-slate-500 max-w-sm">
-                      Masukan Anda untuk {feedbackResult.agencyName} telah tercatat dan masuk ke antrean triage internal.
+                    <div className="mt-1 flex items-center justify-center">
+                      <span className="font-mono text-2xl font-black text-navy-950 tracking-wider bg-yellow-400/25 border-2 border-yellow-500/50 px-5 py-2 rounded-2xl shadow-xs">
+                        {feedbackResult.ticketNumber}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-slate-500">
+                      No. Referensi: <span className="font-mono font-semibold text-slate-700">{feedbackResult.reference}</span>
                     </p>
-                    <div className="mt-6 flex gap-3 w-full max-w-xs">
+
+                    {/* Summary Card */}
+                    <div className="mt-4 w-full max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left text-xs text-slate-700 space-y-2">
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">Nomor Tiket:</span>
+                        <span className="font-mono font-extrabold text-navy-950">{feedbackResult.ticketNumber}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">Pelapor:</span>
+                        <span className="font-semibold text-navy-950">{feedbackResult.name}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">NIK:</span>
+                        <span className="font-mono font-semibold text-navy-950">
+                          {feedbackResult.nik ? `${feedbackResult.nik.slice(0, 4)}********${feedbackResult.nik.slice(-4)}` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">Email / Telp:</span>
+                        <span className="font-medium text-slate-800">
+                          {feedbackResult.email} {feedbackResult.phone ? `(${feedbackResult.phone})` : ''}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">Instansi / Kategori:</span>
+                        <span className="font-semibold text-navy-950 text-right max-w-[220px] truncate">
+                          {feedbackResult.agencyName} • {feedbackResult.category}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                        <span className="text-slate-500 font-medium">Berkas KTP:</span>
+                        <span className="font-medium text-slate-800 truncate max-w-[220px]">
+                          📎 {feedbackResult.ktpName}
+                        </span>
+                      </div>
+                      {feedbackResult.supportingName && (
+                        <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
+                          <span className="text-slate-500 font-medium">Data Pendukung:</span>
+                          <span className="font-medium text-slate-800 truncate max-w-[220px]">
+                            📎 {feedbackResult.supportingName}
+                          </span>
+                        </div>
+                      )}
+                      <div className="pt-1">
+                        <span className="text-slate-500 font-medium block mb-1">Uraian Masukan:</span>
+                        <p className="rounded-lg bg-white p-2.5 text-slate-800 border border-slate-200/80 italic line-clamp-3">
+                          "{feedbackResult.message}"
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-xs text-slate-500 max-w-sm">
+                      Masukan Anda telah masuk ke antrean triage internal. Simpan nomor tiket di atas untuk memantau status tindak lanjut.
+                    </p>
+                    <div className="mt-5 flex gap-3 w-full max-w-xs">
                       <button
                         type="button"
-                        onClick={() => copyToClipboard(feedbackResult.reference)}
-                        className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        onClick={() => copyToClipboard(feedbackResult.ticketNumber)}
+                        className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Salin Kode
+                        Salin No. Tiket
                       </button>
                       <button
                         type="button"
-                        onClick={() => setFeedbackResult(null)}
+                        onClick={resetFeedbackForm}
                         className="flex-1 rounded-xl bg-navy-950 py-2.5 text-xs font-bold text-white hover:bg-navy-900"
                       >
                         Kirim Baru
@@ -575,65 +741,258 @@ export default function LandingPage() {
                 ) : (
                   <form onSubmit={handleFeedbackSubmit} className="space-y-4">
                     {feedbackError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
-                        {feedbackError}
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 flex items-start gap-2">
+                        <span className="text-base leading-none">⚠️</span>
+                        <span>{feedbackError}</span>
                       </div>
                     )}
 
-                    {/* Field 1: Kementerian / Lembaga */}
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-800 mb-1.5">
-                        Kementerian / Lembaga
-                      </label>
-                      <select
-                        value={feedbackAgencyId}
-                        onChange={(e) => setFeedbackAgencyId(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                        required
-                      >
-                        <option value="">Pilih instansi...</option>
-                        {agencies.map((agy) => (
-                          <option key={agy.id} value={agy.id}>
-                            {agy.name} ({agy.code})
-                          </option>
-                        ))}
-                      </select>
+                    {/* Row: Nama Lengkap & NIK */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Field 1: Nama Lengkap (*wajib) */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          Nama Lengkap <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={feedbackName}
+                          onChange={(e) => setFeedbackName(e.target.value)}
+                          placeholder="Contoh: Budi Santoso"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                          required
+                        />
+                      </div>
+
+                      {/* Field 2: NIK (*wajib) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                            NIK <span className="text-red-500">*</span>
+                          </label>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {feedbackNik.length}/16 digit
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={16}
+                          value={feedbackNik}
+                          onChange={(e) => setFeedbackNik(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                          placeholder="16 digit NIK"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                          required
+                        />
+                      </div>
                     </div>
 
-                    {/* Field 2: Jenis Masukan */}
+                    {/* Field 3: Upload KTP (*wajib) */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-800 mb-1.5">
-                        Jenis Masukan
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Upload KTP <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={feedbackCategory}
-                        onChange={(e) => setFeedbackCategory(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                        required
-                      >
-                        <option value="">Pilih kategori...</option>
-                        <option value="Keberatan Besaran Tarif">Keberatan Besaran Tarif</option>
-                        <option value="Usulan Penyesuaian Tarif">Usulan Penyesuaian Tarif</option>
-                        <option value="Ketidakjelasan Regulasi & Dasar Hukum">Ketidakjelasan Regulasi & Dasar Hukum</option>
-                        <option value="Permohonan Tarif Nol Rupiah / Keringanan">Permohonan Tarif Nol Rupiah / Keringanan</option>
-                        <option value="Kualitas Layanan & Prosedur">Kualitas Layanan & Prosedur</option>
-                        <option value="Lainnya">Lainnya</option>
-                      </select>
+                      <input
+                        ref={ktpInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,application/pdf"
+                        onChange={handleKtpChange}
+                        className="hidden"
+                      />
+                      {feedbackKtpFile ? (
+                        <div className="flex items-center justify-between rounded-xl border border-eco-200 bg-eco-50/70 p-3">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eco-600 text-white text-sm font-bold">
+                              ✓
+                            </span>
+                            <div className="truncate">
+                              <p className="truncate text-xs font-bold text-eco-950">{feedbackKtpFile.name}</p>
+                              <p className="text-[11px] text-eco-700">
+                                {(feedbackKtpFile.size / 1024).toFixed(1)} KB • Siap diunggah
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFeedbackKtpFile(null)
+                              if (ktpInputRef.current) ktpInputRef.current.value = ''
+                            }}
+                            className="ml-2 shrink-0 text-xs font-semibold text-red-600 hover:text-red-700 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => ktpInputRef.current?.click()}
+                          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 p-4 text-center transition hover:border-navy-950/40 hover:bg-slate-100/60"
+                        >
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-xs mb-1.5">
+                            🪪
+                          </div>
+                          <p className="text-xs font-bold text-navy-950">
+                            Pilih berkas KTP pelapor <span className="text-eco-600 font-semibold">(Wajib)</span>
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            Format JPG, PNG, atau PDF (maksimal 5MB)
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Field 3: Detail Masukan */}
+                    {/* Row: Email & Telp */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Field 4: Email (*wajib) */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          Email <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={feedbackEmail}
+                          onChange={(e) => setFeedbackEmail(e.target.value)}
+                          placeholder="nama@email.com"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                          required
+                        />
+                      </div>
+
+                      {/* Field 5: Telp (tidak wajib) */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          No. Telepon / WhatsApp <span className="text-slate-400 font-normal normal-case text-[11px]">(Tidak Wajib)</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={feedbackPhone}
+                          onChange={(e) => setFeedbackPhone(e.target.value.replace(/[^\d+ -]/g, '').slice(0, 20))}
+                          placeholder="Contoh: 081234567890"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row: Kementerian/Lembaga & Jenis Masukan */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Field 6: Kementerian / Lembaga (tetap kondisi eksisting) */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          Kementerian / Lembaga <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={feedbackAgencyId}
+                          onChange={(e) => setFeedbackAgencyId(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                          required
+                        >
+                          <option value="">Pilih instansi...</option>
+                          {agencies.map((agy) => (
+                            <option key={agy.id} value={agy.id}>
+                              {agy.name} ({agy.code})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Field 7: Jenis Masukan (tetap kondisi eksisting) */}
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          Jenis Masukan <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={feedbackCategory}
+                          onChange={(e) => setFeedbackCategory(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                          required
+                        >
+                          <option value="">Pilih kategori...</option>
+                          <option value="Keberatan Besaran Tarif">Keberatan Besaran Tarif</option>
+                          <option value="Usulan Penyesuaian Tarif">Usulan Penyesuaian Tarif</option>
+                          <option value="Ketidakjelasan Regulasi & Dasar Hukum">Ketidakjelasan Regulasi & Dasar Hukum</option>
+                          <option value="Permohonan Tarif Nol Rupiah / Keringanan">Permohonan Tarif Nol Rupiah / Keringanan</option>
+                          <option value="Kualitas Layanan & Prosedur">Kualitas Layanan & Prosedur</option>
+                          <option value="Lainnya">Lainnya</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Field 8: Detail Masukan (wajib) */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-800 mb-1.5">
-                        Detail Masukan
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Detail Masukan <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         value={feedbackDetail}
                         onChange={(e) => setFeedbackDetail(e.target.value)}
-                        placeholder="Tuliskan masukan Anda..."
-                        rows={5}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
+                        placeholder="Tuliskan masukan Anda secara jelas, termasuk nomor PP/PMK atau nama layanan bila ada..."
+                        rows={4}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
                         required
                       />
+                    </div>
+
+                    {/* Field 9: Upload Data Pendukung (tidak wajib) */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Upload Data Pendukung <span className="text-slate-400 font-normal normal-case text-[11px]">(Tidak Wajib)</span>
+                      </label>
+                      <input
+                        ref={supportingInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                        onChange={handleSupportingChange}
+                        className="hidden"
+                      />
+                      {feedbackSupportingFile ? (
+                        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700 text-white text-sm font-bold">
+                              📄
+                            </span>
+                            <div className="truncate">
+                              <p className="truncate text-xs font-bold text-slate-900">{feedbackSupportingFile.name}</p>
+                              <p className="text-[11px] text-slate-500">
+                                {(feedbackSupportingFile.size / 1024).toFixed(1)} KB • Dokumen terlampir
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFeedbackSupportingFile(null)
+                              if (supportingInputRef.current) supportingInputRef.current.value = ''
+                            }}
+                            className="ml-2 shrink-0 text-xs font-semibold text-red-600 hover:text-red-700 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => supportingInputRef.current?.click()}
+                          className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/50 py-2.5 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100/70 hover:border-slate-400 transition"
+                        >
+                          <span>📎 Unggah Dokumen / Bukti Pendukung</span>
+                          <span className="text-[11px] text-slate-400">(PDF, DOC, XLS, maks 10MB)</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Persetujuan Privasi (SOT NFR-02, F-PUB-01) */}
+                    <div className="flex items-start gap-2.5 pt-1">
+                      <input
+                        id={feedbackConsentId}
+                        type="checkbox"
+                        checked={feedbackConsent}
+                        onChange={(e) => setFeedbackConsent(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-eco-600 focus:ring-eco-500"
+                        required
+                      />
+                      <label htmlFor={feedbackConsentId} className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
+                        Saya menyatakan bahwa identitas dan masukan yang disampaikan adalah benar dan bersedia diverifikasi untuk tindak lanjut evaluasi PNBP.
+                      </label>
                     </div>
 
                     {/* Submit Button */}

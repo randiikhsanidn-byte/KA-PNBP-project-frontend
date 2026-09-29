@@ -30,10 +30,10 @@ KA PNBP menyediakan satu pintu untuk:
 ### 4.1 Landing Page Publik
 - **FR-PUB-01** Header dengan brand KA PNBP, navigasi publik, tombol **Login** di kanan atas.
 - **FR-PUB-02** Hero menggunakan foto kereta/pemandangan Indonesia terlampir sebagai background utama.
-- **FR-PUB-03** CTA jelas ke **Masukan Tarif PNBP** dan **Pertanyaan Tarif PNBP**.
-- **FR-PUB-04** Form masukan tarif: identitas opsional/terkontrol, K/L, layanan, tarif, jenis masukan, uraian, lampiran opsional, persetujuan privasi.
-- **FR-PUB-05** Setelah submit, sistem memberi nomor referensi dan ringkasan status.
-- **FR-PUB-06** Form pertanyaan tarif: kata kunci/pertanyaan, K/L opsional, layanan opsional, kontak opsional, persetujuan privasi.
+- **FR-PUB-03** CTA jelas ke **Masukan Tarif PNBP** dan **Tanya Nita, Temukan tarif PNBP**.
+- **FR-PUB-04** Form masukan tarif: identitas wajib (Nama lengkap, NIK 16 digit, Upload KTP, Email), nomor telepon opsional, Kementerian/Lembaga (kondisi eksisting), Jenis Masukan (kondisi eksisting), Detail masukan wajib, Upload data pendukung opsional, persetujuan privasi.
+- **FR-PUB-05** Setelah submit, sistem memberi nomor tiket (nomor tiket / referensi pelacakan) dan ringkasan status masukan.
+- **FR-PUB-06** Tanya Nita (Navigator Informasi Tarif berbasis AI): asisten pencarian tarif dan regulasi PNBP interaktif dengan avatar kartun wanita berhijab (Nita), pencarian kata kunci/pertanyaan, dan referensi dasar hukum terverifikasi.
 - **FR-PUB-07** Sistem dapat menampilkan jawaban FAQ/knowledge result bila tersedia; bila belum ada, pertanyaan dapat diteruskan sebagai tiket.
 - **FR-PUB-08** Anti-spam: rate limit, validation, honeypot/CAPTCHA sesuai kebutuhan implementasi.
 

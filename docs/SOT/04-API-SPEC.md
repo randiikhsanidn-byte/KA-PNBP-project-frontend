@@ -40,21 +40,23 @@
 ### POST `/public/feedback` — PUBLIC
 ```json
 {
+  "name": "Budi Santoso",
+  "nik": "3201234567890001",
+  "ktp_file": { "name": "ktp_budi.jpg", "size": 102400 },
+  "email": "budi.santoso@example.com",
+  "phone": "081234567890",
   "agency_id": "agy_1",
   "service_id": "svc_1",
   "tariff_id": "trf_1",
   "category": "tarif",
   "message": "...",
-  "name": "optional",
-  "email": "optional",
-  "phone": "optional",
-  "consent": true,
-  "attachment_ids": []
+  "supporting_file": { "name": "data_dukung.pdf", "size": 204800 },
+  "consent": true
 }
 ```
 **201**
 ```json
-{ "data": { "reference": "FB-2026-000123", "status": "new" } }
+{ "data": { "ticket_number": "TKT-FB-2026-000123", "reference": "FB-2026-000123", "status": "new" } }
 ```
 
 ### GET `/public/feedback/{reference}/status` — PUBLIC + verification rule

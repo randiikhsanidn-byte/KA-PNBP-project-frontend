@@ -98,10 +98,13 @@ export const api = {
     await delay(350)
     // Server-side validation simulation
     const errors = {}
+    if (!payload.name || !payload.name.trim()) errors.name = 'Nama lengkap wajib diisi.'
+    if (!payload.nik || !/^\d{16}$/.test(payload.nik)) errors.nik = 'NIK wajib 16 digit angka.'
+    if (!payload.ktp_file) errors.ktp_file = 'Upload KTP wajib diisi.'
+    if (!payload.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) errors.email = 'Format email tidak valid.'
     if (!payload.agency_id) errors.agency_id = 'Kementerian/Lembaga wajib dipilih.'
-    if (!payload.service_id) errors.service_id = 'Layanan PNBP wajib dipilih.'
-    if (!payload.tariff_id) errors.tariff_id = 'Tarif wajib dipilih.'
-    if (!payload.message || !payload.message.trim()) errors.message = 'Uraian masukan wajib diisi.'
+    if (!payload.category) errors.category = 'Jenis masukan wajib dipilih.'
+    if (!payload.message || !payload.message.trim()) errors.message = 'Detail masukan wajib diisi.'
     if (!payload.consent) errors.consent = 'Persetujuan privasi wajib dicentang.'
 
     if (Object.keys(errors).length > 0) {
@@ -110,12 +113,36 @@ export const api = {
 
     const randomSuffix = Math.floor(1000 + Math.random() * 9000)
     const reference = `FB-2026-00${randomSuffix}`
+    const ticketNumber = `TKT-${reference}`
+
+    const newRecord = {
+      id: reference,
+      ticket_number: ticketNumber,
+      agency: payload.agency_name || 'Kementerian Terkait',
+      service: payload.service_name || 'Layanan Umum PNBP',
+      tariff: payload.tariff_name || 'Tarif Terkait',
+      category: payload.category,
+      date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      submitter: payload.name,
+      nik: payload.nik,
+      email: payload.email,
+      phone: payload.phone || '-',
+      ktp_file: payload.ktp_file?.name || 'KTP.pdf',
+      supporting_file: payload.supporting_file?.name || null,
+      summary: payload.message,
+      status: 'new',
+      priority: 'Sedang',
+      assignedTo: 'Belum ditugaskan',
+    }
+    mockFeedbackQueue.unshift(newRecord)
 
     return successEnvelope({
+      ticket_number: ticketNumber,
       reference,
       status: 'new',
       status_label: 'Baru (Menunggu Triage)',
       submitted_at: new Date().toISOString(),
+      item: newRecord,
     })
   },
 
