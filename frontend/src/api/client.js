@@ -12,6 +12,8 @@ import {
   mockQuestionsQueue,
   activity,
   mockUsers,
+  pnbpRealizationData,
+  regulationsData,
 } from '../data/mock'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -82,6 +84,51 @@ export const api = {
       }
     }
     return successEnvelope([])
+  },
+
+  // Public Realization Statistics (04-API-SPEC.md Section 3)
+  async getPnbpRealization() {
+    if (AUTH_MODE === 'live') {
+      const res = await fetch(`${API_BASE_URL}/statistics/pnbp-realization`)
+      return res.json()
+    }
+    await delay(100)
+    return successEnvelope(pnbpRealizationData)
+  },
+
+  // Public Regulations Repository (04-API-SPEC.md Section 3)
+  async getRegulations({ q = '', category = '', year = '', status = '' } = {}) {
+    if (AUTH_MODE === 'live') {
+      const query = new URLSearchParams()
+      if (q) query.set('q', q)
+      if (category) query.set('category', category)
+      if (year) query.set('year', year)
+      if (status) query.set('status', status)
+      const res = await fetch(`${API_BASE_URL}/regulations?${query.toString()}`)
+      return res.json()
+    }
+    await delay(120)
+    let filtered = [...regulationsData]
+    if (q) {
+      const lower = q.toLowerCase()
+      filtered = filtered.filter(
+        (r) =>
+          r.nomor.toLowerCase().includes(lower) ||
+          r.tentang.toLowerCase().includes(lower) ||
+          r.ringkasan_tarif.toLowerCase().includes(lower) ||
+          r.tags.some((t) => t.toLowerCase().includes(lower))
+      )
+    }
+    if (category && category !== 'Semua') {
+      filtered = filtered.filter((r) => r.kategori.toLowerCase() === category.toLowerCase())
+    }
+    if (year && year !== 'Semua') {
+      filtered = filtered.filter((r) => String(r.tahun) === String(year))
+    }
+    if (status && status !== 'Semua') {
+      filtered = filtered.filter((r) => r.status.toLowerCase() === status.toLowerCase())
+    }
+    return successEnvelope(filtered)
   },
 
   // Public Feedback (04-API-SPEC.md Section 4)

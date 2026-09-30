@@ -21,3 +21,140 @@ button, input, select, textarea { font: inherit; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* =========================================================
+   PROFESSIONAL AMBIENT & MOTION EFFECTS (GOV-TECH STANDARDS)
+   ========================================================= */
+
+@keyframes slowCinematicZoom {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.045) translate(-0.5%, -0.5%); }
+}
+
+@keyframes ambientSunbeam {
+  0%, 100% { opacity: 0.35; transform: scale(1) translateY(0); }
+  50% { opacity: 0.65; transform: scale(1.1) translateY(-6px); }
+}
+
+@keyframes gentlePulseBeacon {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.9); opacity: 0; }
+}
+
+/* 3-Second Periodic Automatic Light Sheen Sweep */
+@keyframes autoSheenPeriodic {
+  0% {
+    transform: translateX(-150%) rotate(25deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.9;
+  }
+  24% {
+    transform: translateX(180%) rotate(25deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(180%) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+/* 3-Second Periodic Card Subtle Border Glow */
+@keyframes cardPeriodicGlow3s {
+  0%, 70%, 100% {
+    border-color: #f1f5f9;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  }
+  12% {
+    border-color: rgba(217, 119, 6, 0.45);
+    box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.14), 0 0 0 1.5px rgba(245, 158, 11, 0.25);
+  }
+}
+
+/* 3-Second Search Bar Ambient Pulse */
+@keyframes searchBarPulse3s {
+  0%, 70%, 100% {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+    border-color: rgba(255, 255, 255, 0.92);
+  }
+  15% {
+    box-shadow: 0 14px 35px -5px rgba(245, 158, 11, 0.28), 0 0 0 3px rgba(245, 158, 11, 0.22);
+    border-color: rgba(245, 158, 11, 0.85);
+  }
+}
+
+/* 3-Second Arrow Micro Movement */
+@keyframes arrowNudge3s {
+  0%, 70%, 100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(3.5px);
+  }
+  25% {
+    transform: translateX(0);
+  }
+}
+
+.animate-cinematic-bg {
+  animation: slowCinematicZoom 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-ambient-sunbeam {
+  animation: ambientSunbeam 9s ease-in-out infinite;
+}
+
+.animate-beacon-ping-3s {
+  animation: gentlePulseBeacon 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-search-pulse-3s {
+  animation: searchBarPulse3s 3s ease-in-out infinite;
+}
+
+.animate-arrow-nudge-3s {
+  animation: arrowNudge3s 3s ease-in-out infinite;
+}
+
+/* Elegant light sheen sweep running automatically every 3 seconds across cards */
+.gov-card-auto-sheen {
+  position: relative;
+  overflow: hidden;
+  animation: cardPeriodicGlow3s 3s ease-in-out infinite;
+}
+
+.gov-card-auto-sheen::after {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -70%;
+  width: 240%;
+  height: 240%;
+  background: linear-gradient(
+    110deg,
+    transparent 32%,
+    rgba(219, 234, 254, 0.35) 44%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(254, 240, 138, 0.35) 56%,
+    transparent 68%
+  );
+  animation: autoSheenPeriodic 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Stagger delay for wave shimmer across 3 cards */
+.gov-card-delay-1,
+.gov-card-delay-1::after {
+  animation-delay: 0s;
+}
+.gov-card-delay-2,
+.gov-card-delay-2::after {
+  animation-delay: 0.25s;
+}
+.gov-card-delay-3,
+.gov-card-delay-3::after {
+  animation-delay: 0.5s;
+}

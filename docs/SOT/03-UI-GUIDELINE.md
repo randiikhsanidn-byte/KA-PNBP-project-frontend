@@ -36,9 +36,9 @@
 - Header 72px, putih/translucent ringan, border-bottom tipis.
 - Brand kiri: kotak kuning `KA` + teks `PNBP`; tanpa tulisan “Kementerian Keuangan Republik Indonesia”.
 - Login di kanan atas.
-- Hero: foto terlampir sebagai background penuh; focal point kereta di sisi kanan dijaga.
-- Overlay hanya untuk keterbacaan; konten utama di kiri agar tidak menutupi kereta.
-- Dua CTA publik tampil jelas dan langsung menuju area/form terkait.
+- Hero: foto terlampir (`Background.png`) sebagai background penuh.
+- Box konten hero diposisikan di tengah (*centered alignment*) dengan card putih bersih / *translucent* berpendar lembut, tipografi terpusat, dan tiga kartu navigasi utama (Dasar Hukum PNBP, Masukan Tarif, Realisasi PNBP).
+- Overlay seimbang dan netral agar latar lanskap perkeretaapian tetap tampak proporsional dan teks memiliki kontras optimal.
 
 ### Internal
 - Desktop: sidebar 264px + content fluid.

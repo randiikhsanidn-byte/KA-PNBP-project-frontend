@@ -34,6 +34,8 @@
 | GET | `/agencies` | PUBLIC | daftar K/L |
 | GET | `/services?agency_id=` | PUBLIC | layanan per K/L |
 | GET | `/tariffs?service_id=&q=` | PUBLIC | tarif/referensi layanan |
+| GET | `/regulations?q=&category=&year=&status=` | PUBLIC | repositori dasar hukum & peraturan PNBP |
+| GET | `/statistics/pnbp-realization` | PUBLIC | data realisasi PNBP Kemenkeu 2021–2025 |
 | GET | `/faq?q=&agency_id=&service_id=` | PUBLIC | knowledge/FAQ tarif |
 
 ## 4. Public Feedback

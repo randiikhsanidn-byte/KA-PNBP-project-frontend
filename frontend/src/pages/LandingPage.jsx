@@ -1,75 +1,65 @@
-import { useState, useId, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import Brand from '../components/Brand'
-import { Field, inputClass, selectClass, textareaClass } from '../components/Field'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import PnbpRealizationSection from '../components/PnbpRealizationSection'
 import heroImage from '../assets/Background.png'
 import nitaAvatar from '../assets/nita-avatar.jpg'
 import { agencies, faqs } from '../data/mock'
 import { api } from '../api/client'
 
-function ArrowIcon({ className = 'h-4 w-4' }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  )
-}
-
-function CheckCircleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m5 12 4 4L19 6" />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.35-4.35" />
-    </svg>
-  )
-}
-
 export default function LandingPage() {
-  const feedbackConsentId = useId()
-  const questionConsentId = useId()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  const [heroSearch, setHeroSearch] = useState('')
 
-  // Knowledge & Question Chat State (Tanya Nita, Temukan tarif PNBP)
+  const handleHeroSearchSubmit = (e) => {
+    e.preventDefault()
+    if (heroSearch.trim()) {
+      navigate(`/dasar-hukum?q=${encodeURIComponent(heroSearch.trim())}`)
+    } else {
+      navigate('/dasar-hukum')
+    }
+  }
+  // Knowledge & Question Chat State (Tanya Nita, Navigator Informasi Tarif)
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'system',
-      text: 'Halo! Saya Nita, Navigator Informasi Tarif berbasis AI. Ada yang bisa saya bantu terkait tarif PNBP pada instansi tertentu?',
-      citation: null,
+      text: 'Halo! Saya Nita, Navigator Informasi Tarif berbasis AI Kementerian Keuangan & Perhubungan. Silakan tanyakan informasi tarif PNBP, regulasi PP/PMK, atau biaya layanan perkeretaapian.',
+      citation: 'PP No. 15 Tahun 2016 & UU No. 9 Tahun 2018',
+    },
+    {
+      sender: 'user',
+      text: 'Berapa besaran tarif pengujian sarana lokomotif diesel?',
+    },
+    {
+      sender: 'nita',
+      text: 'Berdasarkan PP No. 15 Tahun 2016 dan Permenhub PM 17 Tahun 2022, tarif jasa pengujian sarana perkeretaapian lokomotif diesel elektrik adalah sebesar Rp 17.500.000 per unit yang disetorkan langsung ke Kas Negara via Simponi.',
+      citation: 'PP No. 15/2016 (Lampiran Tarif Sarana)',
     },
   ])
   const [chatInput, setChatInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
   const chatEndRef = useRef(null)
-
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const isInitialMount = useRef(true)
 
   useEffect(() => {
-    scrollToBottom()
+    // Pada mount awal, pastikan scroll selalu di paling atas (Hero view)
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      return
+    }
+    // Hanya scroll chat ketika pengguna atau AI mengirim pesan baru
+    if (chatMessages.length > 1) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [chatMessages, aiTyping])
 
   // RAG query search over faqs and agencies
   const queryAiRag = (userQuestion) => {
     const q = userQuestion.toLowerCase().trim()
 
-    // 1. Direct keywords match in faqs
+    // 1. Match in faqs
     for (const item of faqs) {
       const matchesKeyword = item.keywords.some((k) => q.includes(k.toLowerCase()))
       const titleWords = item.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3)
@@ -83,7 +73,7 @@ export default function LandingPage() {
       }
     }
 
-    // 2. Direct match in agency services and tariffs
+    // 2. Match in agency services & tariffs
     for (const agy of agencies) {
       for (const svc of agy.services) {
         if (q.includes(svc.name.toLowerCase().slice(0, 10))) {
@@ -106,258 +96,63 @@ export default function LandingPage() {
       }
     }
 
-    // 3. Specific common queries
-    if (q.includes('sim') || q.includes('mengemudi') || q.includes('polri')) {
+    // 3. Fallback answers
+    if (q.includes('kereta') || q.includes('masinis') || q.includes('rel') || q.includes('tac')) {
       return {
-        text: 'Tarif resmi penerbitan SIM baru C adalah Rp 100.000 (perpanjangan Rp 75.000). SIM A baru Rp 120.000 (perpanjangan Rp 80.000). Ketentuan ini berlaku nasional di luar biaya tes kesehatan & psikologi pihak ketiga.',
-        citation: 'PP No. 76 Tahun 2020 (Polri)',
+        text: 'Berdasarkan PP No. 15 Tahun 2016 dan Permenhub PM 17 Tahun 2022, tarif jasa transportasi perkeretaapian mencakup pengujian sarana (lokomotif, kereta, gerbong), sertifikasi masinis, dan Track Access Charge (TAC) yang dihitung berdasarkan formula tonase dan jarak tempuh.',
+        citation: 'PP No. 15/2016 & Permenhub PM 17/2022',
         found: true,
       }
     }
 
-    if (q.includes('kereta') || q.includes('masinis') || q.includes('kemenhub')) {
-      return {
-        text: 'Tarif sertifikasi masinis pertama diatur sebesar Rp 350.000 per orang, dan perpanjangan Rp 200.000 per orang sesuai regulasi PNBP Kementerian Perhubungan.',
-        citation: 'PP No. 15 Tahun 2016 (Kemenhub)',
-        found: true,
-      }
-    }
-
-    if (q.includes('tanah') || q.includes('bpn') || q.includes('sertipikat') || q.includes('skpt')) {
-      return {
-        text: 'Biaya pengecekan sertipikat tanah elektronik dan penerbitan SKPT elektronik dikenakan tarif tetap Rp 50.000 per berkas layanan.',
-        citation: 'PP No. 128 Tahun 2015 (Kementerian ATR/BPN)',
-        found: true,
-      }
-    }
-
-    if (q.includes('0') || q.includes('nol') || q.includes('keringanan') || q.includes('umkm') || q.includes('bencana')) {
-      return {
-        text: 'Kementerian/Lembaga dapat mengusulkan tarif sampai dengan Rp 0,00 (nol rupiah) atau 0% bagi masyarakat tertentu seperti kegiatan sosial keagamaan, korban bencana alam, dan pelaku UMKM.',
-        citation: 'PMK No. 122/PMK.02/2023 (Kemenkeu)',
-        found: true,
-      }
-    }
-
-    // 4. Fallback intelligent response
     return {
-      text: `Terima kasih atas pertanyaannya mengenai "${userQuestion}". Menurut penelusuran arsitektur RAG pada basis data regulasi aktif, informasi rinci tarif untuk kata kunci tersebut belum terindeks pada pencarian cepat.\n\nAnda dapat menyampaikan masukan tarif atau permohonan kejelasan regulasi melalui formulir di sebelah kanan agar dapat ditelaah lebih lanjut.`,
-      citation: 'UU No. 9 Tahun 2018 tentang PNBP',
+      text: 'Pertanyaan Anda memerlukan telaah spesifik oleh Tim Pokja Regulasi Tarif PNBP. Anda dapat mengajukan pertanyaan ini secara resmi atau menyampaikan masukan melalui formulir Masukan Tarif untuk ditindaklanjuti.',
+      citation: null,
       found: false,
     }
   }
 
   const handleSendChat = (e) => {
-    if (e) e.preventDefault()
-    const q = chatInput.trim()
-    if (!q) return
+    e.preventDefault()
+    if (!chatInput.trim() || aiTyping) return
 
-    setChatMessages((prev) => [...prev, { sender: 'user', text: q }])
+    const userText = chatInput.trim()
+    setChatMessages((prev) => [...prev, { sender: 'user', text: userText }])
     setChatInput('')
     setAiTyping(true)
 
     setTimeout(() => {
-      const result = queryAiRag(q)
+      const response = queryAiRag(userText)
       setChatMessages((prev) => [
         ...prev,
         {
-          sender: 'ai',
-          text: result.text,
-          citation: result.citation,
+          sender: 'nita',
+          text: response.text,
+          citation: response.citation,
+          found: response.found,
+        },
+      ])
+      setAiTyping(false)
+    }, 700)
+  }
+
+  const handleQuickAsk = (questionText) => {
+    setChatMessages((prev) => [...prev, { sender: 'user', text: questionText }])
+    setAiTyping(true)
+
+    setTimeout(() => {
+      const response = queryAiRag(questionText)
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: 'nita',
+          text: response.text,
+          citation: response.citation,
+          found: response.found,
         },
       ])
       setAiTyping(false)
     }, 600)
-  }
-
-  const handleQuickAsk = (tag) => {
-    setChatMessages((prev) => [...prev, { sender: 'user', text: tag }])
-    setAiTyping(true)
-
-    setTimeout(() => {
-      const result = queryAiRag(tag)
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: 'ai',
-          text: result.text,
-          citation: result.citation,
-        },
-      ])
-      setAiTyping(false)
-    }, 500)
-  }
-
-  // Feedback Form State (Masukan atas Tarif PNBP)
-  const [feedbackName, setFeedbackName] = useState('')
-  const [feedbackNik, setFeedbackNik] = useState('')
-  const [feedbackKtpFile, setFeedbackKtpFile] = useState(null)
-  const [feedbackEmail, setFeedbackEmail] = useState('')
-  const [feedbackPhone, setFeedbackPhone] = useState('')
-  const [feedbackAgencyId, setFeedbackAgencyId] = useState('')
-  const [feedbackCategory, setFeedbackCategory] = useState('')
-  const [feedbackDetail, setFeedbackDetail] = useState('')
-  const [feedbackSupportingFile, setFeedbackSupportingFile] = useState(null)
-  const [feedbackConsent, setFeedbackConsent] = useState(true)
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
-  const [feedbackResult, setFeedbackResult] = useState(null)
-  const [feedbackError, setFeedbackError] = useState('')
-
-  const ktpInputRef = useRef(null)
-  const supportingInputRef = useRef(null)
-
-  const handleKtpChange = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-    if (!allowedTypes.includes(file.type)) {
-      setFeedbackError('File KTP harus berformat gambar (JPG, PNG) atau PDF.')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setFeedbackError('Ukuran file KTP maksimal 5MB.')
-      return
-    }
-    setFeedbackError('')
-    setFeedbackKtpFile(file)
-  }
-
-  const handleSupportingChange = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 10 * 1024 * 1024) {
-      setFeedbackError('Ukuran file data pendukung maksimal 10MB.')
-      return
-    }
-    setFeedbackError('')
-    setFeedbackSupportingFile(file)
-  }
-
-  const resetFeedbackForm = () => {
-    setFeedbackName('')
-    setFeedbackNik('')
-    setFeedbackKtpFile(null)
-    setFeedbackEmail('')
-    setFeedbackPhone('')
-    setFeedbackAgencyId('')
-    setFeedbackCategory('')
-    setFeedbackDetail('')
-    setFeedbackSupportingFile(null)
-    setFeedbackConsent(true)
-    setFeedbackResult(null)
-    setFeedbackError('')
-    if (ktpInputRef.current) ktpInputRef.current.value = ''
-    if (supportingInputRef.current) supportingInputRef.current.value = ''
-  }
-
-  const handleFeedbackSubmit = async (e) => {
-    e.preventDefault()
-    setFeedbackError('')
-
-    if (!feedbackName.trim()) {
-      setFeedbackError('Nama lengkap wajib diisi.')
-      return
-    }
-    const cleanNik = feedbackNik.trim()
-    if (!cleanNik) {
-      setFeedbackError('NIK wajib diisi.')
-      return
-    }
-    if (!/^\d{16}$/.test(cleanNik)) {
-      setFeedbackError('NIK harus terdiri dari 16 digit angka.')
-      return
-    }
-    if (!feedbackKtpFile) {
-      setFeedbackError('Upload KTP (*wajib) belum dipilih.')
-      return
-    }
-    if (!feedbackEmail.trim()) {
-      setFeedbackError('Email wajib diisi.')
-      return
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(feedbackEmail.trim())) {
-      setFeedbackError('Format email tidak valid.')
-      return
-    }
-    if (!feedbackAgencyId) {
-      setFeedbackError('Silakan pilih Kementerian / Lembaga terlebih dahulu.')
-      return
-    }
-    if (!feedbackCategory) {
-      setFeedbackError('Silakan pilih Jenis Masukan terlebih dahulu.')
-      return
-    }
-    if (!feedbackDetail.trim()) {
-      setFeedbackError('Detail masukan wajib diisi.')
-      return
-    }
-    if (!feedbackConsent) {
-      setFeedbackError('Persetujuan privasi wajib dicentang sebelum mengirim.')
-      return
-    }
-
-    setFeedbackSubmitting(true)
-
-    try {
-      const selectedAgencyObj = agencies.find((a) => a.id === feedbackAgencyId)
-      const res = await api.submitFeedback({
-        name: feedbackName.trim(),
-        nik: cleanNik,
-        ktp_file: { name: feedbackKtpFile.name, size: feedbackKtpFile.size },
-        email: feedbackEmail.trim(),
-        phone: feedbackPhone.trim() || null,
-        agency_id: feedbackAgencyId,
-        agency_name: selectedAgencyObj?.name,
-        service_id: selectedAgencyObj?.services[0]?.id || 'svc_general',
-        service_name: selectedAgencyObj?.services[0]?.name || 'Layanan Terkait',
-        tariff_id: selectedAgencyObj?.services[0]?.tariffs[0]?.id || 'trf_general',
-        tariff_name: selectedAgencyObj?.services[0]?.tariffs[0]?.name || 'Tarif Terkait',
-        category: feedbackCategory,
-        message: feedbackDetail.trim(),
-        supporting_file: feedbackSupportingFile
-          ? { name: feedbackSupportingFile.name, size: feedbackSupportingFile.size }
-          : null,
-        consent: feedbackConsent,
-      })
-
-      const now = new Date()
-      const formattedTime =
-        now.toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }) +
-        ' ' +
-        now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
-        ' WIB'
-
-      const ticketNumber = res.data.ticket_number || `TKT-${res.data.reference}`
-
-      setFeedbackResult({
-        ticketNumber: ticketNumber,
-        reference: res.data.reference,
-        statusLabel: res.data.status_label || 'Baru (Menunggu Triage)',
-        submittedAt: formattedTime,
-        agencyName: selectedAgencyObj?.name || 'Instansi Terkait',
-        category: feedbackCategory,
-        message: feedbackDetail.trim(),
-        name: feedbackName.trim(),
-        nik: cleanNik,
-        email: feedbackEmail.trim(),
-        phone: feedbackPhone.trim(),
-        ktpName: feedbackKtpFile.name,
-        supportingName: feedbackSupportingFile?.name || null,
-      })
-    } catch (err) {
-      setFeedbackError(err.message || 'Gagal mengirim masukan. Silakan coba lagi.')
-    } finally {
-      setFeedbackSubmitting(false)
-    }
-  }
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard?.writeText(text)
-    alert(`Kode referensi ${text} berhasil disalin!`)
   }
 
   // Status Tracking Modal State
@@ -378,739 +173,472 @@ export default function LandingPage() {
       const res = await api.getFeedbackStatus(statusQuery.trim().toUpperCase())
       setStatusResult(res.data)
     } catch (err) {
-      setStatusError(err.message || 'Nomor referensi tidak ditemukan. Pastikan format benar, misal: FB-2026-000123')
+      setStatusError(err.message || 'Nomor tiket tidak ditemukan. Pastikan format benar, misal: FB-2026-000123 atau TKT-FB-2026-000123')
     } finally {
       setStatusSearching(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Header — 72px, white/translucent, brand badge, login at right (FR-PUB-01) */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between px-5 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-8">
-            <Brand />
-            <nav className="hidden items-center gap-7 md:flex" aria-label="Navigasi publik">
-              <a
-                href="#masukan"
-                className="text-sm font-semibold text-slate-600 transition hover:text-navy-950 focus:outline-none focus-visible:text-navy-950"
-              >
-                Masukan Tarif
-              </a>
-              <a
-                href="#pertanyaan"
-                className="text-sm font-semibold text-slate-600 transition hover:text-navy-950 focus:outline-none focus-visible:text-navy-950"
-              >
-                Pertanyaan Tarif
-              </a>
-              <button
-                type="button"
-                onClick={() => setStatusModalOpen(true)}
-                className="text-sm font-semibold text-slate-600 transition hover:text-navy-950 focus:outline-none focus-visible:text-navy-950"
-              >
-                Lacak Status
-              </button>
-            </nav>
-          </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
+      <div>
+        {/* Navigation Bar */}
+        <Navbar onOpenStatusModal={() => setStatusModalOpen(true)} />
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-navy-950 px-5 text-sm font-bold text-white transition hover:bg-navy-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20"
-            >
-              <span>Login</span>
-              <ArrowIcon />
-            </Link>
-
-            {/* Mobile menu toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 md:hidden"
-              aria-label="Toggle navigasi publik"
-              aria-expanded={mobileMenuOpen}
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                {mobileMenuOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Nav Drawer */}
-        {mobileMenuOpen ? (
-          <div className="border-t border-slate-200 bg-white px-5 py-4 md:hidden">
-            <div className="flex flex-col space-y-3">
-              <a
-                href="#masukan"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Masukan Tarif PNBP
-              </a>
-              <a
-                href="#pertanyaan"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Pertanyaan Tarif PNBP
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  setStatusModalOpen(true)
-                }}
-                className="rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Lacak Status Masukan
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </header>
-
-      <main>
-        {/* HERO SECTION — Uses Background.png, keeps train visible on right, left panel (FR-PUB-02, FR-PUB-03) */}
-        <section className="relative isolate overflow-hidden bg-navy-950">
+        {/* HERO SECTION — Full Viewport First Fold exactly matching attached photo */}
+        <section className="relative isolate overflow-hidden bg-navy-950 min-h-[calc(100vh-72px)] flex flex-col justify-center">
+          {/* Cinematic Slow Motion Landscape Background */}
           <img
             src={heroImage}
-            alt="Kereta api melintasi lanskap pegunungan dan persawahan di Indonesia"
-            className="absolute inset-0 h-full w-full object-cover object-[64%_center]"
+            alt="Lanskap perkeretaapian Indonesia"
+            className="absolute inset-0 h-full w-full object-cover object-[68%_center] animate-cinematic-bg"
           />
-          {/* Subtle directional gradient to keep text readable on left and train vivid on right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-navy-950/90 via-navy-950/55 to-navy-950/10" aria-hidden="true" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-navy-950/25 to-transparent" aria-hidden="true" />
 
-          <div className="relative mx-auto flex min-h-[610px] max-w-[1480px] items-center px-5 py-16 sm:px-8 lg:min-h-[660px] lg:px-12">
-            <div className="w-full max-w-xl rounded-2xl border border-white/20 bg-white/95 p-7 shadow-soft backdrop-blur-sm sm:p-9 lg:p-10">
-              <div className="mb-6 flex items-center gap-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-eco-600" aria-hidden="true" />
-                <span className="font-['Roboto',sans-serif] text-xs font-bold uppercase tracking-tight text-slate-600">
-                  Kanal Aspirasi PNBP
-                </span>
-              </div>
-              <h1 className="text-4xl font-extrabold tracking-[-0.04em] text-navy-950 sm:text-5xl lg:text-[56px] lg:leading-[1.02]">
-                KA PNBP
-              </h1>
-              <p className="mt-5 max-w-md text-base leading-7 text-slate-600">
-                Sampaikan masukan atas tarif PNBP atau ajukan pertanyaan terkait tarif melalui layanan publik di bawah ini.
+          {/* Subtle Golden Horizon Sunbeam Light (Natural Ministry Ambient Glow) */}
+          <div
+            className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[480px] w-[880px] rounded-full bg-gradient-to-b from-amber-400/20 via-amber-500/5 to-transparent blur-3xl animate-ambient-sunbeam"
+            aria-hidden="true"
+          />
+
+          {/* Balanced cinematic gradient overlay */}
+          <div className="absolute inset-0 bg-navy-950/45 backdrop-brightness-95" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy-950/85 via-navy-950/25 to-navy-950/50" aria-hidden="true" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-50 to-transparent" aria-hidden="true" />
+
+          <div className="relative mx-auto flex w-full max-w-[1440px] flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 text-center my-auto">
+            {/* Category Badge with Active Radar Beacon (3s cycle) */}
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-yellow-300 border border-white/20 backdrop-blur-md shadow-xs transition hover:bg-white/15">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-beacon-ping-3s absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span>Kanal Aspirasi PNBP</span>
+            </div>
+
+            {/* Hero Main Heading */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              KA PNBP
+            </h1>
+
+            {/* Synchronized Container: Sejajar antara Teks dan Box Pencarian */}
+            <div className="mt-2.5 sm:mt-3 w-fit max-w-full mx-auto flex flex-col items-center">
+              {/* Hero Subtitle */}
+              <p className="text-sm sm:text-base md:text-lg text-slate-100 leading-relaxed drop-shadow-sm font-normal sm:whitespace-nowrap w-full text-center">
+                Sampaikan masukan atas tarif PNBP atau ajukan pertanyaan terkait tarif PNBP.
               </p>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                <a
-                  href="#pertanyaan"
-                  className="group flex min-h-24 flex-col justify-between rounded-2xl bg-yellow-500 p-5 text-navy-950 transition hover:-translate-y-0.5 hover:bg-yellow-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-500/40 shadow-sm"
+              {/* Centered Search Bar - Luminous Focus & 3s Periodic Golden Glow */}
+              <form
+                onSubmit={handleHeroSearchSubmit}
+                className="mt-5 sm:mt-6 w-full relative flex items-center bg-white rounded-full shadow-2xl border-2 border-white/90 animate-search-pulse-3s hover:border-yellow-400 focus-within:border-yellow-500 focus-within:ring-4 focus-within:ring-yellow-400/30 transition-all duration-300 p-1.5 sm:p-2 text-left"
+              >
+                <div className="pl-4 sm:pl-5 text-slate-400">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={heroSearch}
+                  onChange={(e) => setHeroSearch(e.target.value)}
+                  placeholder="Cari Dasar Hukum, PP Tarif PNBP, PMK, atau Layanan KA..."
+                  className="w-full bg-transparent px-3.5 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
+                  aria-label="Cari Regulasi atau Tarif PNBP"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full bg-navy-950 px-6 sm:px-7 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-navy-900 active:scale-95 transition-all duration-200 flex items-center gap-1.5 shadow-md shrink-0"
                 >
-                  <span className="text-sm font-bold">Pertanyaan Tarif PNBP</span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-navy-900 group-hover:text-navy-950">
-                    Cari atau ajukan <ArrowIcon />
-                  </span>
-                </a>
-                <a
-                  href="#masukan"
-                  className="group flex min-h-24 flex-col justify-between rounded-2xl bg-navy-950 p-5 text-white transition hover:-translate-y-0.5 hover:bg-navy-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-500/40"
-                >
-                  <span className="text-sm font-bold">Masukan Tarif PNBP</span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-slate-300 group-hover:text-white">
-                    Buka formulir <ArrowIcon />
-                  </span>
-                </a>
-              </div>
+                  <span>Cari</span>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-yellow-400 animate-arrow-nudge-3s" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+            {/* 3 Main Action Cards - Sapuan Berkas Cahaya Halus Berjalan Otomatis Setiap 3 Detik */}
+            <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 w-full max-w-5xl">
+              {/* 1. Dasar Hukum: Neraca Keadilan / Timbangan Hukum Resmi (JDIH / Regulasi) */}
+              <Link
+                to="/dasar-hukum"
+                className="gov-card-auto-sheen gov-card-delay-1 group relative flex flex-col items-center justify-between rounded-2xl bg-white p-5 sm:p-7 text-center shadow-xl border border-slate-100 hover:border-slate-300 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 min-h-[210px]"
+              >
+                {/* Subtle top indicator glow */}
+                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-navy-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
+                <div className="flex flex-col items-center">
+                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-blue-50/80 text-navy-950 flex items-center justify-center mb-3 sm:mb-4 border border-blue-100/80 group-hover:scale-110 group-hover:bg-blue-100/90 group-hover:text-navy-900 transition-all duration-300 shadow-2xs">
+                    <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-8 sm:w-8 text-navy-950 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      {/* Tiang Utama & Penopang */}
+                      <path d="M12 3v17" strokeWidth="2" />
+                      <path d="M5 6.5h14" strokeWidth="2" />
+                      <path d="M8 20h8" strokeWidth="2" />
+                      <circle cx="12" cy="3.5" r="1.5" fill="currentColor" />
+                      {/* Piringan Timbangan Kiri */}
+                      <path d="M5 6.5L2 12.5h6L5 6.5z" />
+                      <path d="M2 12.5a3 3 0 0 0 6 0" />
+                      {/* Piringan Timbangan Kanan */}
+                      <path d="M19 6.5L16 12.5h6l-3-6.5z" />
+                      <path d="M16 12.5a3 3 0 0 0 6 0" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950 group-hover:text-blue-900 transition-colors duration-200">
+                    Dasar Hukum PNBP
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Telusuri regulasi UU, PP tarif resmi, PMK, dan ketentuan perkeretaapian
+                  </p>
+                </div>
+              </Link>
+
+              {/* 2. Masukan Tarif: Berkas Formulir Aspirasi & Pena Resmi Pemerintah */}
+              <Link
+                to="/masukan-tarif"
+                className="gov-card-auto-sheen gov-card-delay-2 group relative flex flex-col items-center justify-between rounded-2xl bg-white p-5 sm:p-7 text-center shadow-xl border border-slate-100 hover:border-slate-300 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 min-h-[210px]"
+              >
+                {/* Subtle top indicator glow */}
+                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-yellow-500/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
+                <div className="flex flex-col items-center">
+                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-blue-50/80 text-navy-950 flex items-center justify-center mb-3 sm:mb-4 border border-blue-100/80 group-hover:scale-110 group-hover:bg-blue-100/90 group-hover:text-navy-900 transition-all duration-300 shadow-2xs">
+                    <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-8 sm:w-8 text-navy-950 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      {/* Lembar Dokumen Formulir Aspirasi */}
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6" />
+                      {/* Baris Berkas Isian */}
+                      <path d="M8 12h5" />
+                      <path d="M8 16h4" />
+                      {/* Pena Resmi Pemerintahan */}
+                      <path d="M18 11.5l1.5-1.5a1.414 1.414 0 0 0-2-2L13 12.5V15h2.5L18 11.5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950 group-hover:text-blue-900 transition-colors duration-200">
+                    Masukan Tarif
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Formulir usulan penyesuaian, evaluasi tarif, & keberatan resmi masyarakat
+                  </p>
+                </div>
+              </Link>
+
+              {/* 3. Realisasi PNBP: Gedung Perbendaharaan Negara / Kas Negara (Kemenkeu) */}
+              <a
+                href="#realisasi"
+                className="gov-card-auto-sheen gov-card-delay-3 group relative flex flex-col items-center justify-between rounded-2xl bg-white p-5 sm:p-7 text-center shadow-xl border border-slate-100 hover:border-slate-300 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 min-h-[210px]"
+              >
+                {/* Subtle top indicator glow */}
+                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-emerald-600/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
+                <div className="flex flex-col items-center">
+                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-blue-50/80 text-navy-950 flex items-center justify-center mb-3 sm:mb-4 border border-blue-100/80 group-hover:scale-110 group-hover:bg-blue-100/90 group-hover:text-navy-900 transition-all duration-300 shadow-2xs">
+                    <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-8 sm:w-8 text-navy-950 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      {/* Atap Segitiga Gedung Perbendaharaan / Treasury Pediment */}
+                      <path d="M3 9.5L12 3l9 6.5" strokeWidth="2" />
+                      {/* Pilar-Pilar Kas Negara */}
+                      <path d="M6 10v8" strokeWidth="2" />
+                      <path d="M10 10v8" strokeWidth="2" />
+                      <path d="M14 10v8" strokeWidth="2" />
+                      <path d="M18 10v8" strokeWidth="2" />
+                      {/* Pondasi Lantai Gedung */}
+                      <path d="M3 18h18" strokeWidth="2" />
+                      <path d="M2 21h20" strokeWidth="2" />
+                      {/* Lambang Segel Kas Negara */}
+                      <circle cx="12" cy="6.8" r="1.2" fill="currentColor" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950 group-hover:text-blue-900 transition-colors duration-200">
+                    Realisasi PNBP
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Data capaian PNBP dari Target APBN dan kinerja tahun 2021–2025
+                  </p>
+                </div>
+              </a>
             </div>
           </div>
         </section>
 
-        {/* SECTION: Asisten AI & Masukan atas Tarif PNBP (Side-by-side Layout) */}
-        <section id="layanan" className="scroll-mt-16 border-b border-slate-200 bg-slate-100/70 py-16 lg:py-24">
-          <div className="mx-auto max-w-[1480px] px-5 sm:px-8 lg:px-12">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 items-start">
-              
-              {/* LEFT CARD: Asisten AI Tarif PNBP */}
-              <div
-                id="pertanyaan"
-                className="scroll-mt-24 rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-9 shadow-soft flex flex-col justify-between"
-              >
+        {/* SECTION 2: TANYA NITA (AI REGULATORY NAVIGATOR) & FITUR MASUKAN */}
+        <section id="tanya-nita" className="py-14 sm:py-16 bg-white border-t border-slate-200">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              {/* Left Column: Tanya Nita AI Assistant (7 Cols) - Ukuran Lebih Besar & Multi Percakapan Terlihat */}
+              {/* Left Column: Tanya Nita AI Assistant (7 Cols) - Ukuran Font Diperkecil & Tampilan Rapi */}
+              <div className="lg:col-span-7 bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3.5 mb-6">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl overflow-hidden border border-slate-200 shadow-xs shrink-0">
                       <img src={nitaAvatar} alt="Nita Avatar" className="h-full w-full object-cover" />
                     </div>
                     <div>
-                      <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
-                        Tanya Nita, Temukan tarif PNBP
+                      <h2 className="text-lg sm:text-xl font-extrabold text-navy-950">
+                        Tanya Nita, Temukan Tarif PNBP
                       </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Navigator Informasi Tarif berbasis AI
+                      <p className="text-xs text-slate-500">
+                        Navigator Informasi & Regulasi Tarif PNBP Berbasis AI
                       </p>
                     </div>
                   </div>
 
-                  {/* Chat Box Container */}
-                  <div className="rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 sm:p-5 flex flex-col min-h-[380px] max-h-[460px] overflow-hidden justify-between">
-                    {/* Chat Messages List */}
-                    <div className="overflow-y-auto space-y-4 pr-1 mb-3 flex-1 max-h-[320px]">
+                  {/* Chat Box Conversation - Font Diperkecil agar Lebih Banyak Percakapan Terbaca */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 flex flex-col min-h-[350px] max-h-[440px] overflow-hidden justify-between">
+                    <div className="overflow-y-auto space-y-3 pr-1.5 mb-2.5 flex-1 max-h-[290px]">
                       {chatMessages.map((msg, idx) =>
                         msg.sender !== 'user' ? (
-                          <div key={idx} className="flex items-start gap-3">
-                            <img src={nitaAvatar} alt="Nita" className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-xs" />
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-none border border-slate-200/80 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-xs">
+                          <div key={idx} className="flex items-start gap-2">
+                            <img src={nitaAvatar} alt="Nita" className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0" />
+                            <div className="max-w-[88%] rounded-xl rounded-tl-none bg-slate-50 border border-slate-200/80 p-2.5 sm:p-3 text-[11px] sm:text-xs text-slate-800 leading-relaxed shadow-2xs">
                               <p className="whitespace-pre-line">{msg.text}</p>
                               {msg.citation && (
-                                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                                  <span>📚 Dasar Regulasi:</span>
-                                  <span className="font-semibold text-navy-950">{msg.citation}</span>
+                                <div className="mt-1.5 pt-1.5 border-t border-slate-200 flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 font-medium">
+                                  <span>📖 Dasar Hukum:</span>
+                                  <span className="font-bold text-navy-950">{msg.citation}</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         ) : (
                           <div key={idx} className="flex justify-end">
-                            <div className="max-w-[85%] rounded-2xl rounded-tr-none bg-navy-950 p-3.5 text-sm leading-relaxed text-white shadow-xs">
+                            <div className="max-w-[85%] rounded-xl rounded-tr-none bg-navy-950 p-2.5 text-[11px] sm:text-xs text-white shadow-2xs leading-relaxed">
                               <p>{msg.text}</p>
                             </div>
                           </div>
                         )
                       )}
                       {aiTyping && (
-                        <div className="flex items-start gap-3">
-                          <img src={nitaAvatar} alt="Nita" className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-xs" />
-                          <div className="rounded-2xl rounded-tl-none border border-slate-200/80 bg-white p-3.5 text-xs text-slate-500 flex items-center gap-2 shadow-xs">
+                        <div className="flex items-start gap-2">
+                          <img src={nitaAvatar} alt="Nita" className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0" />
+                          <div className="rounded-xl rounded-tl-none bg-slate-50 border border-slate-200 p-2 text-[11px] sm:text-xs text-slate-500 flex items-center gap-2">
                             <span className="flex gap-1">
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
                               <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </span>
-                            <span>Nita sedang menelusuri regulasi & data tarif PNBP...</span>
+                            <span>Nita sedang menelusuri database regulasi PNBP...</span>
                           </div>
                         </div>
                       )}
                       <div ref={chatEndRef} />
                     </div>
 
-                    {/* Quick suggestion chips */}
-                    <div className="pt-2 border-t border-slate-200/60 flex flex-wrap gap-1.5">
-                      <span className="text-[11px] font-medium text-slate-400 self-center mr-1">Tanya cepat:</span>
-                      {['Tarif SIM C', 'Sertifikasi Masinis', 'Uji Truk KIR', 'Cek Sertipikat Tanah', 'Tarif 0 Rupiah'].map((tag) => (
+                    {/* Quick question suggestion chips */}
+                    <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
+                      <span className="text-[10px] sm:text-[11px] text-slate-400 self-center mr-1">Pertanyaan cepat:</span>
+                      {['Sertifikasi Masinis', 'Track Access Charge', 'Uji Lokomotif', 'Tarif KRL Commuter', 'Keberatan Tarif PP 59'].map((q) => (
                         <button
-                          key={tag}
+                          key={q}
                           type="button"
-                          onClick={() => handleQuickAsk(tag)}
-                          className="rounded-lg border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:border-navy-950 hover:text-navy-950 transition"
+                          onClick={() => handleQuickAsk(q)}
+                          className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-slate-700 hover:bg-slate-100 hover:text-navy-950 transition"
                         >
-                          {tag}
+                          {q}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Input form */}
-                  <form onSubmit={handleSendChat} className="mt-4 flex gap-2.5">
+                  {/* Input Chat */}
+                  <form onSubmit={handleSendChat} className="mt-3 flex items-center gap-2">
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Ketik pertanyaan anda disini..."
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                      disabled={aiTyping}
+                      placeholder="Ketik pertanyaan tarif atau regulasi di sini..."
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-900"
                     />
                     <button
                       type="submit"
-                      disabled={aiTyping || !chatInput.trim()}
-                      className="rounded-xl bg-navy-950 px-6 py-3 text-sm font-extrabold text-white transition hover:bg-navy-900 disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20"
+                      disabled={!chatInput.trim() || aiTyping}
+                      className="rounded-xl bg-navy-950 px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-navy-900 transition disabled:opacity-50 flex items-center gap-1.5 shadow-xs shrink-0"
                     >
-                      Kirim
+                      <span>Kirim</span>
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
                     </button>
                   </form>
                 </div>
               </div>
 
-              {/* RIGHT CARD: Masukan atas Tarif PNBP */}
-              <div
-                id="masukan"
-                className="scroll-mt-24 rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-9 shadow-soft"
-              >
-                <div className="flex items-center gap-3.5 mb-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-eco-50 text-2xl border border-eco-100/80 shadow-xs">
-                    ✏️
-                  </div>
+              {/* Right Column: CTA Banner Masukan Tarif & Lacak Status (5 Cols - Seimbang & Solutif) */}
+              <div className="lg:col-span-5 flex flex-col justify-between gap-4 sm:gap-5">
+                {/* Banner 1: Masukan Tarif PNBP */}
+                <div className="flex-1 flex flex-col justify-between bg-gradient-to-br from-navy-950 to-navy-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-navy-900/60">
                   <div>
-                    <h2 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-navy-950">
-                      Masukan atas Tarif PNBP
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Sampaikan masukan, aspirasi, atau usulan penyesuaian tarif PNBP secara resmi dan terverifikasi.
-                    </p>
-                  </div>
-                </div>
-
-                {feedbackResult ? (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-eco-100 text-eco-700">
-                      <CheckCircleIcon />
+                    <div className="flex items-center gap-2 text-xs font-bold text-yellow-400 uppercase tracking-wider mb-2">
+                      <span className="h-2 w-2 rounded-full bg-yellow-400"></span>
+                      <span>Saluran Aspirasi Publik</span>
                     </div>
-                    <span className="mt-3 inline-flex items-center rounded-full bg-eco-100 px-3 py-1 text-xs font-bold text-eco-700">
-                      {feedbackResult.statusLabel}
-                    </span>
-                    <h3 className="mt-2 text-xl font-extrabold text-navy-950">
-                      Masukan Berhasil Diterima
+                    <h3 className="text-lg sm:text-xl font-extrabold text-white leading-snug mb-2">
+                      Ajukan Masukan & Keberatan Tarif PNBP
                     </h3>
-                    <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Nomor Tiket Anda:
-                    </p>
-                    <div className="mt-1 flex items-center justify-center">
-                      <span className="font-mono text-2xl font-black text-navy-950 tracking-wider bg-yellow-400/25 border-2 border-yellow-500/50 px-5 py-2 rounded-2xl shadow-xs">
-                        {feedbackResult.ticketNumber}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-slate-500">
-                      No. Referensi: <span className="font-mono font-semibold text-slate-700">{feedbackResult.reference}</span>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+                      Pemerintah membuka ruang aspirasi publik untuk dijadikan bahan pertimbangan dalam proses penyusunan kebijakan dan regulasi.
                     </p>
 
-                    {/* Summary Card */}
-                    <div className="mt-4 w-full max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left text-xs text-slate-700 space-y-2">
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">Nomor Tiket:</span>
-                        <span className="font-mono font-extrabold text-navy-950">{feedbackResult.ticketNumber}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">Pelapor:</span>
-                        <span className="font-semibold text-navy-950">{feedbackResult.name}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">NIK:</span>
-                        <span className="font-mono font-semibold text-navy-950">
-                          {feedbackResult.nik ? `${feedbackResult.nik.slice(0, 4)}********${feedbackResult.nik.slice(-4)}` : '-'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">Email / Telp:</span>
-                        <span className="font-medium text-slate-800">
-                          {feedbackResult.email} {feedbackResult.phone ? `(${feedbackResult.phone})` : ''}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">Instansi / Kategori:</span>
-                        <span className="font-semibold text-navy-950 text-right max-w-[220px] truncate">
-                          {feedbackResult.agencyName} • {feedbackResult.category}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                        <span className="text-slate-500 font-medium">Berkas KTP:</span>
-                        <span className="font-medium text-slate-800 truncate max-w-[220px]">
-                          📎 {feedbackResult.ktpName}
-                        </span>
-                      </div>
-                      {feedbackResult.supportingName && (
-                        <div className="flex justify-between border-b border-slate-200/80 pb-1.5">
-                          <span className="text-slate-500 font-medium">Data Pendukung:</span>
-                          <span className="font-medium text-slate-800 truncate max-w-[220px]">
-                            📎 {feedbackResult.supportingName}
-                          </span>
+                    {/* 3 Kategori Aspirasi Publik */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-start gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-yellow-400/20 text-yellow-300 text-[11px] font-bold">1</span>
+                        <div>
+                          <h4 className="text-xs font-bold text-white">Keberatan Besaran Tarif</h4>
+                          <p className="text-[11px] text-slate-300 leading-snug">Keberatan atas tarif PNBP yang terlalu memberatkan masyarakat dan pelaku usaha.</p>
                         </div>
-                      )}
-                      <div className="pt-1">
-                        <span className="text-slate-500 font-medium block mb-1">Uraian Masukan:</span>
-                        <p className="rounded-lg bg-white p-2.5 text-slate-800 border border-slate-200/80 italic line-clamp-3">
-                          "{feedbackResult.message}"
-                        </p>
                       </div>
-                    </div>
-
-                    <p className="mt-3 text-xs text-slate-500 max-w-sm">
-                      Masukan Anda telah masuk ke antrean triage internal. Simpan nomor tiket di atas untuk memantau status tindak lanjut.
-                    </p>
-                    <div className="mt-5 flex gap-3 w-full max-w-xs">
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(feedbackResult.ticketNumber)}
-                        className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Salin No. Tiket
-                      </button>
-                      <button
-                        type="button"
-                        onClick={resetFeedbackForm}
-                        className="flex-1 rounded-xl bg-navy-950 py-2.5 text-xs font-bold text-white hover:bg-navy-900"
-                      >
-                        Kirim Baru
-                      </button>
+                      <div className="flex items-start gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-yellow-400/20 text-yellow-300 text-[11px] font-bold">2</span>
+                        <div>
+                          <h4 className="text-xs font-bold text-white">Usulan Penyesuaian Tarif</h4>
+                          <p className="text-[11px] text-slate-300 leading-snug">Aspirasi evaluasi dan usulan perubahan besaran tarif PNBP.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-yellow-400/20 text-yellow-300 text-[11px] font-bold">3</span>
+                        <div>
+                          <h4 className="text-xs font-bold text-white">Ketidakjelasan Regulasi / Dasar Hukum</h4>
+                          <p className="text-[11px] text-slate-300 leading-snug">Klarifikasi aturan multitafsir terhadap ketentuan PP/PMK atau pungutan tanpa dasar hukum.</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                    {feedbackError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 flex items-start gap-2">
-                        <span className="text-base leading-none">⚠️</span>
-                        <span>{feedbackError}</span>
-                      </div>
-                    )}
 
-                    {/* Row: Nama Lengkap & NIK */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* Field 1: Nama Lengkap (*wajib) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                          Nama Lengkap <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={feedbackName}
-                          onChange={(e) => setFeedbackName(e.target.value)}
-                          placeholder="Contoh: Budi Santoso"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                          required
-                        />
-                      </div>
-
-                      {/* Field 2: NIK (*wajib) */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            NIK <span className="text-red-500">*</span>
-                          </label>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            {feedbackNik.length}/16 digit
-                          </span>
-                        </div>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={16}
-                          value={feedbackNik}
-                          onChange={(e) => setFeedbackNik(e.target.value.replace(/\D/g, '').slice(0, 16))}
-                          placeholder="16 digit NIK"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Field 3: Upload KTP (*wajib) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Upload KTP <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        ref={ktpInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/jpg,application/pdf"
-                        onChange={handleKtpChange}
-                        className="hidden"
-                      />
-                      {feedbackKtpFile ? (
-                        <div className="flex items-center justify-between rounded-xl border border-eco-200 bg-eco-50/70 p-3">
-                          <div className="flex items-center gap-2.5 overflow-hidden">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eco-600 text-white text-sm font-bold">
-                              ✓
-                            </span>
-                            <div className="truncate">
-                              <p className="truncate text-xs font-bold text-eco-950">{feedbackKtpFile.name}</p>
-                              <p className="text-[11px] text-eco-700">
-                                {(feedbackKtpFile.size / 1024).toFixed(1)} KB • Siap diunggah
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFeedbackKtpFile(null)
-                              if (ktpInputRef.current) ktpInputRef.current.value = ''
-                            }}
-                            className="ml-2 shrink-0 text-xs font-semibold text-red-600 hover:text-red-700 hover:underline"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => ktpInputRef.current?.click()}
-                          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 p-4 text-center transition hover:border-navy-950/40 hover:bg-slate-100/60"
-                        >
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-xs mb-1.5">
-                            🪪
-                          </div>
-                          <p className="text-xs font-bold text-navy-950">
-                            Pilih berkas KTP pelapor <span className="text-eco-600 font-semibold">(Wajib)</span>
-                          </p>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            Format JPG, PNG, atau PDF (maksimal 5MB)
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Row: Email & Telp */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* Field 4: Email (*wajib) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                          Email <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          value={feedbackEmail}
-                          onChange={(e) => setFeedbackEmail(e.target.value)}
-                          placeholder="nama@email.com"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                          required
-                        />
-                      </div>
-
-                      {/* Field 5: Telp (tidak wajib) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                          No. Telepon / WhatsApp <span className="text-slate-400 font-normal normal-case text-[11px]">(Tidak Wajib)</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={feedbackPhone}
-                          onChange={(e) => setFeedbackPhone(e.target.value.replace(/[^\d+ -]/g, '').slice(0, 20))}
-                          placeholder="Contoh: 081234567890"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Row: Kementerian/Lembaga & Jenis Masukan */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {/* Field 6: Kementerian / Lembaga (tetap kondisi eksisting) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                          Kementerian / Lembaga <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={feedbackAgencyId}
-                          onChange={(e) => setFeedbackAgencyId(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                          required
-                        >
-                          <option value="">Pilih instansi...</option>
-                          {agencies.map((agy) => (
-                            <option key={agy.id} value={agy.id}>
-                              {agy.name} ({agy.code})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Field 7: Jenis Masukan (tetap kondisi eksisting) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                          Jenis Masukan <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={feedbackCategory}
-                          onChange={(e) => setFeedbackCategory(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                          required
-                        >
-                          <option value="">Pilih kategori...</option>
-                          <option value="Keberatan Besaran Tarif">Keberatan Besaran Tarif</option>
-                          <option value="Usulan Penyesuaian Tarif">Usulan Penyesuaian Tarif</option>
-                          <option value="Ketidakjelasan Regulasi & Dasar Hukum">Ketidakjelasan Regulasi & Dasar Hukum</option>
-                          <option value="Permohonan Tarif Nol Rupiah / Keringanan">Permohonan Tarif Nol Rupiah / Keringanan</option>
-                          <option value="Kualitas Layanan & Prosedur">Kualitas Layanan & Prosedur</option>
-                          <option value="Lainnya">Lainnya</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Field 8: Detail Masukan (wajib) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Detail Masukan <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        value={feedbackDetail}
-                        onChange={(e) => setFeedbackDetail(e.target.value)}
-                        placeholder="Tuliskan masukan Anda secara jelas, termasuk nomor PP/PMK atau nama layanan bila ada..."
-                        rows={4}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-navy-950 focus:outline-none focus:ring-2 focus:ring-navy-950/20"
-                        required
-                      />
-                    </div>
-
-                    {/* Field 9: Upload Data Pendukung (tidak wajib) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Upload Data Pendukung <span className="text-slate-400 font-normal normal-case text-[11px]">(Tidak Wajib)</span>
-                      </label>
-                      <input
-                        ref={supportingInputRef}
-                        type="file"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                        onChange={handleSupportingChange}
-                        className="hidden"
-                      />
-                      {feedbackSupportingFile ? (
-                        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <div className="flex items-center gap-2.5 overflow-hidden">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700 text-white text-sm font-bold">
-                              📄
-                            </span>
-                            <div className="truncate">
-                              <p className="truncate text-xs font-bold text-slate-900">{feedbackSupportingFile.name}</p>
-                              <p className="text-[11px] text-slate-500">
-                                {(feedbackSupportingFile.size / 1024).toFixed(1)} KB • Dokumen terlampir
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFeedbackSupportingFile(null)
-                              if (supportingInputRef.current) supportingInputRef.current.value = ''
-                            }}
-                            className="ml-2 shrink-0 text-xs font-semibold text-red-600 hover:text-red-700 hover:underline"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => supportingInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/50 py-2.5 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100/70 hover:border-slate-400 transition"
-                        >
-                          <span>📎 Unggah Dokumen / Bukti Pendukung</span>
-                          <span className="text-[11px] text-slate-400">(PDF, DOC, XLS, maks 10MB)</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Persetujuan Privasi (SOT NFR-02, F-PUB-01) */}
-                    <div className="flex items-start gap-2.5 pt-1">
-                      <input
-                        id={feedbackConsentId}
-                        type="checkbox"
-                        checked={feedbackConsent}
-                        onChange={(e) => setFeedbackConsent(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-eco-600 focus:ring-eco-500"
-                        required
-                      />
-                      <label htmlFor={feedbackConsentId} className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
-                        Saya menyatakan bahwa identitas dan masukan yang disampaikan adalah benar dan bersedia diverifikasi untuk tindak lanjut evaluasi PNBP.
-                      </label>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-2">
-                      <button
-                        type="submit"
-                        disabled={feedbackSubmitting}
-                        className="w-full h-12 rounded-xl bg-eco-600 hover:bg-eco-700 text-sm font-bold text-white transition disabled:opacity-60 focus:outline-none focus-visible:ring-4 focus-visible:ring-eco-600/20 shadow-sm"
-                      >
-                        {feedbackSubmitting ? 'Mengirim Masukan...' : 'Kirim Masukan'}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Institutional Footer */}
-      <footer className="border-t border-slate-200 bg-navy-950 text-slate-300">
-        <div className="mx-auto flex max-w-[1480px] flex-col gap-5 px-5 py-9 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
-          <Brand inverted />
-          <p className="text-xs leading-5 text-slate-400 max-w-lg">
-            KA PNBP Prototype v0.1 — Portal layanan masukan tarif, pencarian pertanyaan tarif, dan monitoring proyek transformasi PNBP.
-          </p>
-          <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
-            <a href="#masukan" className="hover:text-white">Masukan Tarif</a>
-            <span>•</span>
-            <a href="#pertanyaan" className="hover:text-white">Pertanyaan</a>
-            <span>•</span>
-            <Link to="/login" className="hover:text-yellow-400">Login Internal</Link>
-          </div>
-        </div>
-      </footer>
-      {/* Public Status Tracking Modal (FR-PUB-05, 04-API-SPEC.md Section 4) */}
-      {statusModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="text-lg font-extrabold text-navy-950">Lacak Status Masukan</h3>
-                <p className="text-xs text-slate-500">Periksa perkembangan tiket masukan tarif Anda.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusModalOpen(false)
-                  setStatusResult(null)
-                  setStatusError('')
-                }}
-                className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSearchStatus} className="mt-5 space-y-4">
-              {statusError ? (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
-                  {statusError}
+                  <div className="pt-1">
+                    <Link
+                      to="/masukan-tarif"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-500 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-navy-950 hover:bg-yellow-400 transition shadow-sm w-full sm:w-auto"
+                    >
+                      <span>Buka Halaman Masukan Tarif</span>
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
-              ) : null}
 
-              <div>
-                <label className="block mb-1.5 text-xs font-bold text-slate-700">
-                  Nomor Referensi (Contoh: FB-2026-000123)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={statusQuery}
-                    onChange={(e) => setStatusQuery(e.target.value)}
-                    placeholder="FB-2026-000123"
-                    className={`${inputClass} uppercase`}
-                    required
-                  />
+                {/* Banner 2: Lacak Status Tiket */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-navy-950 flex items-center justify-center border border-blue-100/80 shrink-0">
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                        <rect x="9" y="3" width="6" height="4" rx="2" />
+                        <path d="m9 14 2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        Sudah Mengirim Masukan?
+                      </h4>
+                      <p className="text-sm font-extrabold text-navy-950 mt-0.5">
+                        Lacak Progres Tindak Lanjut Tiket
+                      </p>
+                    </div>
+                  </div>
                   <button
-                    type="submit"
-                    disabled={statusSearching}
-                    className="inline-flex items-center justify-center rounded-xl bg-navy-950 px-5 text-xs font-bold text-white transition hover:bg-navy-900 disabled:opacity-60"
+                    type="button"
+                    onClick={() => setStatusModalOpen(true)}
+                    className="rounded-xl bg-navy-950 px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-navy-900 active:scale-95 transition shadow-xs shrink-0 w-full sm:w-auto"
                   >
-                    {statusSearching ? '...' : 'Periksa'}
+                    Lacak Status
                   </button>
                 </div>
               </div>
-
-              {statusResult ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-700">Status Saat Ini:</span>
-                    <span className="rounded-full bg-eco-100 px-2.5 py-0.5 font-extrabold text-eco-700 uppercase text-[11px]">
-                      {statusResult.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-slate-600">
-                    <span>Nomor Tiket:</span>
-                    <span className="font-bold text-navy-950">{statusResult.reference}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-slate-600">
-                    <span>Kategori:</span>
-                    <span className="uppercase text-slate-800">{statusResult.category}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-slate-600">
-                    <span>Tanggal Masuk:</span>
-                    <span className="text-slate-800">{statusResult.date || 'Terkini'}</span>
-                  </div>
-                  <p className="mt-2 text-[11px] text-slate-400 italic pt-1 border-t border-slate-200">
-                    Catatan internal penelaah dilindungi dan tidak ditampilkan secara publik demi integritas proses evaluasi.
-                  </p>
-                </div>
-              ) : null}
-            </form>
+            </div>
           </div>
-        </div>
-      ) : null}
+        </section>
+
+        {/* SECTION 3: REALISASI PNBP 2021 - 2025 (KEMENKEU OFFICIAL DATA) (FOTO 2) */}
+        <PnbpRealizationSection />
+
+        {/* STATUS TRACKING MODAL */}
+        {statusModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 className="text-lg font-bold text-navy-950">Lacak Status Masukan</h3>
+                <button
+                  type="button"
+                  onClick={() => setStatusModalOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                >
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleSearchStatus} className="space-y-4">
+                <div>
+                  <label htmlFor="modal-tracking-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nomor Tiket / Referensi:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="modal-tracking-input"
+                      type="text"
+                      value={statusQuery}
+                      onChange={(e) => setStatusQuery(e.target.value)}
+                      placeholder="Contoh: FB-2026-000123"
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-navy-900 font-mono"
+                    />
+                    <button
+                      type="submit"
+                      disabled={statusSearching || !statusQuery.trim()}
+                      className="rounded-xl bg-navy-950 px-4 py-2 text-xs font-bold text-white hover:bg-navy-900 transition disabled:opacity-50 shrink-0"
+                    >
+                      {statusSearching ? 'Mencari...' : 'Cari'}
+                    </button>
+                  </div>
+                </div>
+
+                {statusError && (
+                  <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 font-medium">
+                    {statusError}
+                  </div>
+                )}
+
+                {statusResult && (
+                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2 text-xs">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <span className="font-bold text-navy-950 font-mono">{statusResult.ticket_number}</span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">
+                        {statusResult.status_label || statusResult.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-slate-600 pt-1">
+                      <div>
+                        <span className="text-slate-400 block">K/L:</span>
+                        <span className="font-semibold text-slate-800">{statusResult.agency}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Tanggal:</span>
+                        <span className="font-semibold text-slate-800">{statusResult.date}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Ringkasan:</span>
+                      <p className="text-slate-700 font-medium">{statusResult.summary}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setStatusModalOpen(false)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

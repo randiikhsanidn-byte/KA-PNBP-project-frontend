@@ -8,7 +8,9 @@
 ## 1. Tujuan Produk
 KA PNBP menyediakan satu pintu untuk:
 - **PUB-01** menerima masukan publik atas setiap tarif PNBP;
-- **PUB-02** menerima dan menelusuri pertanyaan publik tentang tarif PNBP;
+- **PUB-02** menerima dan merespon pertanyaan publik tentang tarif PNBP melalui AI Nita/Chatbot;
+- **PUB-03** memberikan informasi peraturan dasar hukum tarif PNBP;
+- **PUB-04** memberikan informasi statistik dan visualisasi data realisasi PNBP Kemenkeu 2021–2025;
 - **INT-01** menyusun dan memantau proyek manajemen transformasi PNBP melalui area internal yang wajib login.
 
 ## 2. Prinsip Produk
@@ -27,15 +29,24 @@ KA PNBP menyediakan satu pintu untuk:
 | Internal Admin | Login | Kelola master data, user/role, SLA, kategori, konfigurasi |
 
 ## 4. Ruang Lingkup Fungsional
-### 4.1 Landing Page Publik
-- **FR-PUB-01** Header dengan brand KA PNBP, navigasi publik, tombol **Login** di kanan atas.
-- **FR-PUB-02** Hero menggunakan foto kereta/pemandangan Indonesia terlampir sebagai background utama.
-- **FR-PUB-03** CTA jelas ke **Masukan Tarif PNBP** dan **Tanya Nita, Temukan tarif PNBP**.
-- **FR-PUB-04** Form masukan tarif: identitas wajib (Nama lengkap, NIK 16 digit, Upload KTP, Email), nomor telepon opsional, Kementerian/Lembaga (kondisi eksisting), Jenis Masukan (kondisi eksisting), Detail masukan wajib, Upload data pendukung opsional, persetujuan privasi.
-- **FR-PUB-05** Setelah submit, sistem memberi nomor tiket (nomor tiket / referensi pelacakan) dan ringkasan status masukan.
-- **FR-PUB-06** Tanya Nita (Navigator Informasi Tarif berbasis AI): asisten pencarian tarif dan regulasi PNBP interaktif dengan avatar kartun wanita berhijab (Nita), pencarian kata kunci/pertanyaan, dan referensi dasar hukum terverifikasi.
-- **FR-PUB-07** Sistem dapat menampilkan jawaban FAQ/knowledge result bila tersedia; bila belum ada, pertanyaan dapat diteruskan sebagai tiket.
-- **FR-PUB-08** Anti-spam: rate limit, validation, honeypot/CAPTCHA sesuai kebutuhan implementasi.
+### 4.1 Landing Page & Layanan Publik
+- **FR-PUB-01** Header dengan brand KA PNBP, navigasi publik (Beranda, Dasar Hukum PNBP, Masukan Tarif, Tanya Nita), tombol **Login** di kanan atas.
+- **FR-PUB-02** Hero menggunakan foto kereta/pemandangan Indonesia terlampir (`Background.png`) sebagai background utama dengan tata letak bersih dan proporsional terinspirasi standar INSW INTR.
+- **FR-PUB-03** CTA dan navigasi langsung ke fitur utama: **Dasar Hukum PNBP**, **Masukan Tarif PNBP**, dan **Tanya Nita**.
+- **FR-PUB-04** Visualisasi Data Realisasi PNBP Kemenkeu 2021–2025:
+  - Bar/Line Chart perbandingan Target APBN vs Realisasi Aktual tiap tahun (2021–2025).
+  - Indicator Card pertumbuhan tahunan (Growth YoY %) dan persentase capaian terhadap target APBN.
+  - Breakdown kategori PNBP: PNBP Sumber Daya Alam (SDA), PNBP Kekayaan Negara Dipisahkan (KND / Dividen BUMN), PNBP Lainnya / K/L, dan Pendapatan BLU (Badan Layanan Umum) berbasis data resmi Kementerian Keuangan RI.
+- **FR-PUB-05** Halaman Baru "Dasar Hukum PNBP" (`/dasar-hukum`):
+  - Kotak pencarian besar dan panjang di posisi tengah halaman (ala Google / INSW INTR https://insw.go.id/intr).
+  - Filter kategori peraturan (UU, PP, PMK, Permenhub, Kepmen/SE), filter tahun, dan status keberlakuan.
+  - Matriks & daftar regulasi terkait tarif PNBP, nomor peraturan, judul, tanggal penetapan, ringkasan tarif, tautan unduh PDF resmi.
+- **FR-PUB-06** Halaman Baru "Masukan Tarif PNBP" (`/masukan-tarif`):
+  - Formulir pengajuan masukan masyarakat atas tarif PNBP kereta api pada halaman tersendiri dengan identitas wajib (Nama lengkap, NIK 16 digit, Upload KTP, Email), K/L, jenis masukan, detail usulan, data pendukung opsional, dan persetujuan privasi.
+  - Setelah submit, sistem menerbitkan nomor tiket referensi pelacakan (`TKT-FB-YYYY-XXXXXX`).
+- **FR-PUB-07** Tanya Nita (Navigator Informasi Tarif berbasis AI): asisten pencarian tarif dan regulasi PNBP interaktif dengan avatar kartun wanita berhijab (Nita), pencarian kata kunci/pertanyaan, dan referensi dasar hukum terverifikasi.
+- **FR-PUB-08** Format tata letak, penyajian, dan tipografi menyelaraskan standar portal INSW (https://insw.go.id/intr): clean typography, spacing terstruktur, palet navy-emas-slate institusional.
+- **FR-PUB-09** Anti-spam: rate limit, validation, honeypot/CAPTCHA sesuai kebutuhan implementasi.
 
 ### 4.2 Login Internal
 - **FR-AUTH-01** Login wajib untuk seluruh route internal.

@@ -7,27 +7,25 @@
 
 ## 1. Alur Layanan Publik
 
-### F-PUB-01 — Masukan atas Tarif PNBP
-`[Landing] -> pilih “Masukan Tarif PNBP” -> [Form Masukan]`
+### F-PUB-01 — Masukan atas Tarif PNBP (Halaman Khusus)
+`[Landing / Navbar] -> klik “Masukan Tarif” -> [/masukan-tarif]`
 
-1. Isi identitas pelapor:
+1. Pengguna membuka halaman khusus formulir masukan tarif.
+2. Pengguna mengisi identitas pelapor:
    - Nama lengkap (*wajib)
    - NIK (*wajib, 16 digit angka)
-   - Upload KTP (*wajib, format gambar JPG/PNG/PDF, maks 5MB)
+   - Upload KTP (*wajib, format JPG/PNG/PDF, maks 5MB)
    - Email (*wajib, format valid)
    - No. Telp (tidak wajib)
-2. Pilih Kementerian / Lembaga (kondisi eksisting).
-3. Pilih Jenis Masukan (kondisi eksisting).
-4. Tulis Detail Masukan (*wajib).
-5. Upload Dokumen / Data Pendukung (tidak wajib, format PDF/DOC/Gambar, maks 10MB).
-6. Centang persetujuan privasi.
-7. Submit.
-8. Sistem validasi.
-   - valid → simpan → `[Success]` tampilkan nomor tiket (`ticket_number` / `feedback_reference`).
-   - tidak valid → tetap di form, fokus ke field error.
-   - gagal server → tampilkan error + tombol coba lagi; jangan hilangkan input lokal.
-
-**Success state:** nomor tiket masukan (`TKT-FB-YYYY-XXXXXX`), nomor referensi pelacakan, waktu submit, ringkasan topik, CTA kembali ke landing.
+3. Pilih Kementerian / Lembaga (kondisi eksisting, e.g. Ditjen Perkeretaapian Kemenhub).
+4. Pilih Jenis Masukan (Keberatan Tarif, Usulan Penyesuaian, Permohonan Keringanan, Keluhan Layanan).
+5. Tulis Detail Masukan (*wajib).
+6. Upload Dokumen / Data Pendukung (tidak wajib, maks 10MB).
+7. Centang persetujuan privasi & keabsahan data.
+8. Submit.
+9. Sistem validasi:
+   - valid → simpan → tampilkan nomor tiket masukan (`TKT-FB-YYYY-XXXXXX`), waktu submit, ringkasan, opsi cetak bukti & kembali ke beranda.
+   - tidak valid → fokus ke field error yang belum lengkap.
 
 ### F-PUB-02 — Tanya Nita, Temukan tarif PNBP
 `[Landing] -> pilih “Tanya Nita, Temukan tarif PNBP” -> [Layanan Tanya Nita]`
@@ -42,6 +40,40 @@
 6. Simpan → tampilkan `question_reference`.
 
 **Guardrail:** jawaban publik tidak boleh mengklaim dasar hukum yang tidak tersedia pada sumber terverifikasi.
+
+### F-PUB-03 — Dasar Hukum PNBP (Halaman Khusus)
+`[Landing / Navbar] -> klik “Dasar Hukum PNBP” -> [/dasar-hukum]`
+
+1. Pengguna diarahkan ke halaman repositori regulasi resmi tarif PNBP.
+2. Tampilan utama memiliki kotak pencarian besar dan panjang di tengah halaman.
+3. Pengguna dapat mengetikkan kata kunci, nomor regulasi (misal: "PP 15 Tahun 2016", "PMK 138/2021", "Kereta Api", "Sewa Aset").
+4. Filter instan via chip/tab:
+   - Jenis Regulasi: Semua, UU, PP, PMK, Permenhub, Kepmen/SE.
+   - Tahun Regulasi: 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018.
+   - Status Regulasi: Semua, Berlaku, Diubah, Dicabut.
+5. Menampilkan daftar hasil regulasi dalam card/tabel berisikan:
+   - Nomor & Judul Peraturan
+   - Tanggal Pengundangan & Instansi Penerbit
+   - Badge Status Keberlakuan (Berlaku / Diubah / Dicabut)
+   - Ringkasan tarif / objek PNBP yang diatur
+   - Aksi: Tombol Unduh Dokumen Resmi (PDF) dan Tombol Lihat Rincian Tarif / Pasal.
+6. Modal rincian regulasi menyajikan struktur pasal tarif dan lampiran nominal PNBP.
+
+### F-PUB-04 — Visualisasi Realisasi PNBP 2021–2025 (Landing Page)
+`[Landing] -> Section Statistik Realisasi PNBP`
+
+1. Pengguna dapat melihat grafik perbandingan Target APBN vs Realisasi Aktual PNBP (2021–2025 dalam Triliun Rupiah).
+2. Interaksi chart:
+   - Toggle tipe tampilan: Bar Chart (Grafik Batang) vs Line Chart (Grafik Garis).
+   - Tooltip interaktif menampilkan capaian persentase target pada masing-masing tahun.
+3. Indikator Kinerja Utama (Indicator Card YoY Growth):
+   - Realisasi tahun terkini, persentase pertumbuhan tahunan (YoY Growth %), dan rasio realisasi terhadap target APBN (>100% surplus).
+4. Panel Rincian Kategori PNBP:
+   - PNBP Sumber Daya Alam (SDA)
+   - PNBP Kekayaan Negara Dipisahkan (KND)
+   - PNBP Lainnya (Kementerian / Lembaga)
+   - Pendapatan Badan Layanan Umum (BLU)
+5. Sumber data: Laporan Keuangan Pemerintah Pusat & APBN KiTa Kementerian Keuangan RI.
 
 ---
 
