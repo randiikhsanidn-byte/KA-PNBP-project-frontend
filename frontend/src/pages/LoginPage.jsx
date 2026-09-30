@@ -72,7 +72,7 @@ export default function LoginPage() {
         <img
           src={heroImage}
           alt="Lanskap perkeretaapian Indonesia"
-          className="h-full w-full object-cover object-[68%_center]"
+          className="h-full w-full object-cover object-[90%_center]"
         />
         <div className="absolute inset-0 bg-navy-950/70 backdrop-blur-[2px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-950/85 via-transparent to-navy-950/45" />

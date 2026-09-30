@@ -21,7 +21,7 @@ export default function MasukanTarifPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [agencyId, setAgencyId] = useState(agencies[0]?.id || '')
-  const [category, setCategory] = useState('Keberatan Tarif')
+  const [category, setCategory] = useState('Keberatan besaran tarif')
   const [message, setMessage] = useState('')
   const [supportingFile, setSupportingFile] = useState(null)
   const [consent, setConsent] = useState(false)
@@ -157,7 +157,7 @@ export default function MasukanTarifPage() {
             <div className="flex items-center gap-2 text-xs text-yellow-300 font-semibold mb-2">
               <Link to="/" className="hover:underline">Beranda</Link>
               <span>/</span>
-              <span>Layanan Publik</span>
+              <span>Publik</span>
               <span>/</span>
               <span className="text-white">Form Masukan Tarif PNBP</span>
             </div>
@@ -165,7 +165,7 @@ export default function MasukanTarifPage() {
               Formulir Masukan & Aspirasi Tarif PNBP
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
-              Saluran resmi partisipasi masyarakat, pelaku usaha, dan akademisi dalam menyampaikan masukan, keberatan tarif, usulan keringanan, atau penyesuaian tarif PNBP sesuai PP No. 59/2020 dan PP No. 69/2020.
+              Kanal aspirasi dan partisipasi masyarakat, pelaku usaha, dan akademisi untuk menyampaikan saran, usulan, atau penyesuaian tarif PNBP
             </p>
           </div>
         </section>
@@ -407,11 +407,11 @@ export default function MasukanTarifPage() {
                         onChange={(e) => setCategory(e.target.value)}
                         className={selectClass}
                       >
-                        <option value="Keberatan Tarif">Keberatan atas Penetapan Tarif (PP 59/2020)</option>
-                        <option value="Usulan Penyesuaian">Usulan Penyesuaian / Evaluasi Tarif Baru</option>
-                        <option value="Permohonan Keringanan">Permohonan Keringanan / Penundaan Bayar PNBP</option>
-                        <option value="Klarifikasi Perhitungan">Klarifikasi Formula Tarif (Misal: Track Access Charge)</option>
-                        <option value="Keluhan Layanan">Keluhan Kualitas Layanan PNBP</option>
+                        <option value="Keberatan besaran tarif">Keberatan besaran tarif</option>
+                        <option value="Usulan penyesuaian tarif">Usulan penyesuaian tarif</option>
+                        <option value="Ketidakjelasan regulasi/Dasar Hukum">Ketidakjelasan regulasi/Dasar Hukum</option>
+                        <option value="Keluhan Layanan">Keluhan Layanan</option>
+                        <option value="Lainnya ...">Lainnya ...</option>
                       </select>
                     </Field>
                   </div>
@@ -507,28 +507,6 @@ export default function MasukanTarifPage() {
             </div>
           )}
 
-          {/* Quick Legal Guidance Accordion Box */}
-          <div className="mt-8 rounded-xl bg-slate-100/80 border border-slate-200 p-6 text-xs text-slate-600">
-            <h4 className="font-bold text-navy-950 mb-2 flex items-center gap-2">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              <span>Ketentuan Dasar Pengajuan Masukan & Keberatan Tarif PNBP</span>
-            </h4>
-            <ul className="space-y-1.5 list-disc list-inside text-slate-600 leading-relaxed">
-              <li>
-                <strong>Hak Wajib Bayar (PP No. 59/2020):</strong> Wajib bayar berhak mengajukan keberatan penetapan surat tagihan PNBP dalam kurun waktu 30 hari kalender sejak penetapan.
-              </li>
-              <li>
-                <strong>Evaluasi Berkala Tarif (PP No. 69/2020):</strong> Tarif PNBP Kementerian/Lembaga ditelaah secara periodik minimal 1 kali dalam 2 tahun dengan mempertimbangkan daya beli masyarakat dan biaya operasional pelayanan.
-              </li>
-              <li>
-                <strong>Keringanan PNBP:</strong> Dapat diberikan berupa angsuran atau penundaan pembayaran hingga 12 bulan dalam kondisi kahar (force majeure) atau kesulitan keuangan.
-              </li>
-            </ul>
-          </div>
         </main>
       </div>
 

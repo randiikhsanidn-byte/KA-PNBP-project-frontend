@@ -145,7 +145,7 @@ export default function PnbpRealizationSection() {
                   <span className="text-slate-700">Target APBN</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-xs bg-navy-950 inline-block"></span>
+                  <span className="h-2.5 w-2.5 rounded-xs bg-[#1E3A8A] inline-block border border-blue-900"></span>
                   <span className="text-slate-700">Realisasi</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -274,17 +274,17 @@ export default function PnbpRealizationSection() {
                             {d.targetApbn}
                           </text>
 
-                          {/* Realization Bar (Deep Navy) */}
+                          {/* Realization Bar (Deep Kemenkeu Navy) */}
                           <rect
                             x={centerX + 2}
                             y={baselineY - realH}
                             width={barW}
                             height={realH}
-                            fill={isSelected ? '#071B33' : '#1E3A8A'}
-                            stroke="#071B33"
+                            fill={isSelected ? '#1E3A8A' : '#2563EB'}
+                            stroke="#1E3A8A"
                             strokeWidth="0.75"
                             rx="3"
-                            className="hover:fill-navy-950 transition"
+                            className="hover:fill-blue-900 transition"
                           />
                           <text
                             x={centerX + barW / 2 + 2}
@@ -292,7 +292,7 @@ export default function PnbpRealizationSection() {
                             textAnchor="middle"
                             fontSize="9.5"
                             fontWeight="bold"
-                            fill="#071B33"
+                            fill="#1E3A8A"
                           >
                             {d.realization}
                           </text>
@@ -372,11 +372,11 @@ export default function PnbpRealizationSection() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-                    {/* Realization Line (Navy, solid) */}
+                    {/* Realization Line (Kemenkeu Navy Blue, solid) */}
                     <path
                       d={pathRealization}
                       fill="none"
-                      stroke="#071B33"
+                      stroke="#1E3A8A"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -399,7 +399,7 @@ export default function PnbpRealizationSection() {
                             textAnchor="middle"
                             fontSize="11.5"
                             fontWeight={isSelected ? '800' : '600'}
-                            fill={isSelected ? '#071B33' : '#64748B'}
+                            fill={isSelected ? '#1E3A8A' : '#64748B'}
                           >
                             {p.year}
                           </text>
@@ -436,12 +436,12 @@ export default function PnbpRealizationSection() {
                             {targetP.val}
                           </text>
 
-                          {/* Realization Dot */}
+                          {/* Realization Dot (Kemenkeu Navy Blue) */}
                           <circle
                             cx={p.x}
                             cy={p.y}
                             r={isSelected ? '6.5' : '5'}
-                            fill="#071B33"
+                            fill="#1E3A8A"
                             stroke="#FFFFFF"
                             strokeWidth="2.5"
                           />
@@ -451,7 +451,7 @@ export default function PnbpRealizationSection() {
                             textAnchor="middle"
                             fontSize="10"
                             fontWeight="bold"
-                            fill="#071B33"
+                            fill="#1E3A8A"
                           >
                             {p.val}
                           </text>

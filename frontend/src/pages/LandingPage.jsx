@@ -191,7 +191,7 @@ export default function LandingPage() {
           <img
             src={heroImage}
             alt="Lanskap perkeretaapian Indonesia"
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] animate-cinematic-bg"
+            className="absolute inset-0 h-full w-full object-cover object-[90%_center] animate-cinematic-bg"
           />
 
           {/* Subtle Golden Horizon Sunbeam Light (Natural Ministry Ambient Glow) */}
@@ -349,7 +349,7 @@ export default function LandingPage() {
                     Realisasi PNBP
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
-                    Data capaian PNBP dari Target APBN dan kinerja tahun 2021–2025
+                    Data capaian PNBP dari Target APBN tahun 2021–2025
                   </p>
                 </div>
               </a>
@@ -482,7 +482,7 @@ export default function LandingPage() {
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-yellow-400/20 text-yellow-300 text-[11px] font-bold">1</span>
                         <div>
                           <h4 className="text-xs font-bold text-white">Keberatan Besaran Tarif</h4>
-                          <p className="text-[11px] text-slate-300 leading-snug">Keberatan atas tarif PNBP yang terlalu memberatkan masyarakat dan pelaku usaha.</p>
+                          <p className="text-[11px] text-slate-300 leading-snug">Keberatan atas tarif PNBP yang terlalu membebani masyarakat dan pelaku usaha.</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2.5 rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition">
