@@ -524,14 +524,9 @@ export default function PnbpRealizationSection() {
             <div>
               {/* Header Breakdown Strip */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-                <div className="flex flex-wrap items-baseline gap-1.5">
-                  <h3 className="text-xs sm:text-sm font-bold text-navy-950">
-                    Struktur Kontribusi 4 Kategori Pokok PNBP ({activeYearData.year})
-                  </h3>
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    *Data LKPP
-                  </span>
-                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-navy-950">
+                  Komposisi Realisasi PNBP ({activeYearData.year})
+                </h3>
                 <div className="flex items-center gap-1.5 self-start sm:self-auto">
                   <span className="text-[11px] text-slate-500 font-medium">Total Realisasi:</span>
                   <span className="rounded bg-navy-950 text-white font-mono font-bold text-xs px-2 py-0.5 shadow-2xs">
