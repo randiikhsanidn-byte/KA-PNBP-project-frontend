@@ -103,21 +103,23 @@ export default function LoginPage() {
               <h1 className="mt-2.5 text-2xl font-extrabold tracking-tight text-navy-950 sm:text-3xl">
                 Login Pengguna
               </h1>
-              <p className="mt-1 text-xs text-slate-500">
-                Sistem monitoring & transformasi PNBP berbasis akuntabilitas
+              <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">
+                Kebijakan dan Akselerasi Transformasi PNBP
+                <br />
+                Roadmap PNBP 2025-2029
               </p>
             </div>
 
             {/* Role Quick Selector */}
             <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Pilih Akun Prototipe (SOT 2 Aktor):
+                PILIH TIPE AKUN
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => handleSelectRole('pmo.champion@kemenkeu.go.id')}
-                  className={`flex flex-col items-start rounded-lg border p-2 text-left transition ${
+                  className={`flex flex-col justify-center items-start rounded-lg border p-2 text-left transition ${
                     email === 'pmo.champion@kemenkeu.go.id'
                       ? 'border-navy-900 bg-navy-950 text-white shadow-sm'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -125,22 +127,19 @@ export default function LoginPage() {
                 >
                   <span className="text-xs font-bold leading-tight">PMO / Champion</span>
                   <span className={`text-[10px] ${email === 'pmo.champion@kemenkeu.go.id' ? 'text-slate-300' : 'text-slate-400'}`}>
-                    Draft & Usulan
+                    Usulan dan Kelola Kegiatan
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSelectRole('executive@kemenkeu.go.id')}
-                  className={`flex flex-col items-start rounded-lg border p-2 text-left transition ${
+                  className={`flex flex-col justify-center items-start rounded-lg border p-2 text-left transition ${
                     email === 'executive@kemenkeu.go.id'
                       ? 'border-navy-900 bg-navy-950 text-white shadow-sm'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <span className="text-xs font-bold leading-tight">Executive</span>
-                  <span className={`text-[10px] ${email === 'executive@kemenkeu.go.id' ? 'text-slate-300' : 'text-slate-400'}`}>
-                    Approval & Direct
-                  </span>
+                  <span className="text-xs sm:text-[13px] font-bold leading-tight">Executive</span>
                 </button>
               </div>
             </div>
